@@ -1,4 +1,4 @@
-Financial analysis agent prompt templates.
+# Financial analysis agent prompt templates.
 
 SYSTEM_PROMPT = """\
 You are STX AI, an expert financial analyst AI assistant. \

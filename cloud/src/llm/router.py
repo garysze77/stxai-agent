@@ -1,56 +1,31 @@
-"""LLM routing: Puter (primary) → MiniMax (fallback)."""
-from httpx import AsyncClient
+"""LLM routing: Puter (primary) → MiniMax (fallback).
+
+Both Puter and MiniMax are OpenAI-compatible, so we use LangChain's ChatOpenAI
+with different base_urls and api_keys.
+"""
+from langchain_openai import ChatOpenAI
 from config import settings
 
 
-async def chat_completion(
-    messages: list[dict],
-    tools: list[dict] | None = None,
-) -> dict:
-    """Try Puter first, fall back to MiniMax."""
-    error = None
-
-    # Try Puter
-    try:
-        return await _puter_chat(messages, tools)
-    except Exception as e:
-        error = e
-
-    # Fallback to MiniMax
-    try:
-        return await _minimax_chat(messages, tools)
-    except Exception as e:
-        raise RuntimeError(f"All LLM providers failed. Puter: {error}, MiniMax: {e}")
+def get_llm_client() -> ChatOpenAI:
+    return ChatOpenAI(
+        base_url="https://api.puter.com/puterai/openai/v1/",
+        api_key=settings.puter_api_key or "anonymous",
+        model="claude-sonnet-4-5",
+        temperature=0.3,
+        timeout=60,
+        max_retries=2,
+    )
 
 
-async def _puter_chat(messages: list[dict], tools: list[dict] | None) -> dict:
-    async with AsyncClient() as client:
-        body = {"messages": messages, "model": "claude-sonnet-4-5"}
-        if tools:
-            body["tools"] = tools
-        resp = await client.post(
-            f"{settings.puter_api_url}/chat",
-            json=body,
-            headers={"Authorization": f"Bearer {settings.puter_api_key}"} if settings.puter_api_key else {},
-            timeout=60,
-        )
-        resp.raise_for_status()
-        return resp.json()
-
-
-async def _minimax_chat(messages: list[dict], tools: list[dict] | None) -> dict:
-    async with AsyncClient() as client:
-        body = {
-            "model": "MiniMax-Text-01",
-            "messages": messages,
-        }
-        if tools:
-            body["tools"] = tools
-        resp = await client.post(
-            f"{settings.minimax_api_url}/chat/completions",
-            json=body,
-            headers={"Authorization": f"Bearer {settings.minimax_api_key}"},
-            timeout=60,
-        )
-        resp.raise_for_status()
-        return resp.json()
+def get_fallback_client() -> ChatOpenAI | None:
+    if not settings.minimax_api_key:
+        return None
+    return ChatOpenAI(
+        base_url="https://api.minimax.chat/v1",
+        api_key=settings.minimax_api_key,
+        model="MiniMax-M2.5",
+        temperature=0.3,
+        timeout=60,
+        max_retries=2,
+    )

@@ -33,16 +33,13 @@ def get_db() -> firestore.Client:
 
 async def get_user_by_api_key(api_key: str) -> dict | None:
     db = get_db()
-    try:
-        docs = (
-            db.collection("api_keys")
-            .where(filter=("key", "==", api_key))
-            .where(filter=("is_active", "==", True))
-            .limit(1)
-            .stream()
-        )
-    except Exception as e:
-        raise RuntimeError(f"Firestore query failed: {e}")
+    docs = (
+        db.collection("api_keys")
+        .where("key", "==", api_key)
+        .where("is_active", "==", True)
+        .limit(1)
+        .stream()
+    )
 
     for doc in docs:
         key_data = doc.to_dict()
