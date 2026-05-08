@@ -28,6 +28,8 @@ func init() {
 	rootCmd.AddCommand(cmd.SetupCmd())
 	rootCmd.AddCommand(cmd.StartCmd())
 	rootCmd.AddCommand(cmd.ChatCmd())
+	rootCmd.AddCommand(cmd.ServiceCmd())
+	rootCmd.AddCommand(cmd.UpdateCmd())
 }
 
 func main() {
