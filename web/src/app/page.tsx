@@ -21,7 +21,7 @@ const FEATURES = [
   },
   {
     title: "Self-Hosted Agent",
-    desc: "Open-source Python client — install via pip, run locally. You own your data. Telegram bot and Streamlit dashboard included.",
+    desc: "Open-source Go client — single binary, zero dependencies. Install in seconds. CLI + Telegram bot included. You own your data.",
     icon: "💻",
   },
   {
@@ -144,6 +144,55 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Install */}
+      <section className="px-4 py-20">
+        <div className="mx-auto max-w-3xl text-center">
+          <h2 className="text-3xl font-bold tracking-tight">
+            Install in Seconds
+          </h2>
+          <p className="mt-4 text-zinc-600 dark:text-zinc-400">
+            Single binary, zero dependencies. Works on macOS, Linux, and Windows.
+          </p>
+          <div className="mt-6 rounded-xl border border-zinc-200 bg-zinc-900 p-4 dark:border-zinc-700">
+            <div className="flex items-center justify-between gap-3">
+              <code className="text-sm text-green-400 overflow-x-auto whitespace-nowrap">
+                curl -fsSL https://raw.githubusercontent.com/garysze77/stxai-agent/main/install.sh | sh
+              </code>
+              <button
+                onClick={() => navigator.clipboard.writeText("curl -fsSL https://raw.githubusercontent.com/garysze77/stxai-agent/main/install.sh | sh")}
+                className="shrink-0 rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-300 hover:bg-zinc-800"
+              >
+                Copy
+              </button>
+            </div>
+          </div>
+          <div className="mt-6 grid gap-4 sm:grid-cols-3 text-sm text-zinc-600 dark:text-zinc-400">
+            <div className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+              <span className="text-lg font-bold text-zinc-900 dark:text-zinc-100">1</span>
+              <p className="mt-1">Run the install command above</p>
+            </div>
+            <div className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+              <span className="text-lg font-bold text-zinc-900 dark:text-zinc-100">2</span>
+              <p className="mt-1"><code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">stxai setup</code> — enter your API key</p>
+            </div>
+            <div className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+              <span className="text-lg font-bold text-zinc-900 dark:text-zinc-100">3</span>
+              <p className="mt-1"><code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">stxai chat</code> — start analyzing</p>
+            </div>
+          </div>
+          <p className="mt-4 text-xs text-zinc-400">
+            Or{" "}
+            <a href="https://github.com/garysze77/stxai-agent" target="_blank" rel="noopener noreferrer" className="underline hover:text-zinc-600">
+              download from GitHub Releases
+            </a>
+            {" "}·{" "}
+            <a href="https://github.com/garysze77/stxai-agent" target="_blank" rel="noopener noreferrer" className="underline hover:text-zinc-600">
+              build from source
+            </a>
+          </p>
+        </div>
+      </section>
+
       {/* Features */}
       <section id="features" className="px-4 py-20 bg-zinc-50 dark:bg-zinc-950">
         <div className="mx-auto max-w-6xl">
@@ -230,7 +279,7 @@ export default function LandingPage() {
         <div className="mx-auto flex max-w-6xl items-center justify-between text-sm text-zinc-500">
           <span>STX AI — Open Source Financial Agent</span>
           <a
-            href="https://github.com/garysze77/stxai"
+            href="https://github.com/garysze77/stxai-agent"
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-zinc-700 dark:hover:text-zinc-300"

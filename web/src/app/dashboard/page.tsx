@@ -86,6 +86,26 @@ export default function DashboardPage() {
           </div>
         )}
 
+        {/* Install Agent */}
+        <section className="rounded-xl border border-zinc-200 bg-zinc-50 p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <h2 className="text-xl font-semibold">Install Agent Client</h2>
+          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+            Install the open-source agent on your machine. Use the API key above to connect.
+          </p>
+          <div className="mt-4 rounded-lg bg-zinc-900 p-3">
+            <code className="text-sm text-green-400">
+              curl -fsSL https://raw.githubusercontent.com/garysze77/stxai-agent/main/install.sh | sh
+            </code>
+          </div>
+          <div className="mt-3 flex gap-3 text-sm text-zinc-600 dark:text-zinc-400">
+            <span><strong>1.</strong> Install</span>
+            <span>→</span>
+            <span><strong>2.</strong> <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">stxai setup</code></span>
+            <span>→</span>
+            <span><strong>3.</strong> <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">stxai chat</code></span>
+          </div>
+        </section>
+
         {/* API Keys */}
         <section>
           <h2 className="text-xl font-semibold">API Keys</h2>
