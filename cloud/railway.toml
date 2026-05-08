@@ -8,4 +8,3 @@ restartPolicyType = "ON_FAILURE"
 numReplicas = 1
 
 [service]
-port = 8000

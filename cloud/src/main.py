@@ -30,6 +30,8 @@ async def startup():
 
 
 if __name__ == "__main__":
+    import os
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=settings.api_port)
+    port = int(os.environ.get("PORT", settings.api_port))
+    uvicorn.run(app, host="0.0.0.0", port=port)
