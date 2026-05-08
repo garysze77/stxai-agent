@@ -6,6 +6,7 @@ class ChatRequest(BaseModel):
     message: str
     ticker: str | None = None
     session_id: str | None = None
+    deep_analysis: bool = False
 
 
 class ChatResponse(BaseModel):

@@ -12,3 +12,5 @@ class AgentState:
     subscription_tier: str = "free"
     session_id: str = ""
     tool_results: dict[str, Any] = field(default_factory=dict)
+    bullish_thesis: str = ""
+    bearish_thesis: str = ""
