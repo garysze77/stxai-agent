@@ -27,7 +27,7 @@ func runSetup(_ *cobra.Command, _ []string) error {
 	cfg, _ := config.Load()
 	if cfg == nil {
 		cfg = &config.Config{
-			APIURL:     "https://api.stxai.io/api/v1",
+			APIURL:     "https://api.stxai.app/api/v1",
 			Model:      "stxai-agent",
 			MaxHistory: 20,
 		}

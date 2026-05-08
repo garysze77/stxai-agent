@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-const defaultBaseURL = "https://api.stxai.io/api/v1"
+const defaultBaseURL = "https://api.stxai.app/api/v1"
 
 type Client struct {
 	BaseURL string

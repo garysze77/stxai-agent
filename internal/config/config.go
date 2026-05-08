@@ -28,7 +28,7 @@ func configPath() string {
 func Load() (*Config, error) {
 	v := viper.New()
 	v.SetConfigFile(configPath())
-	v.SetDefault("api_url", "https://api.stxai.io/api/v1")
+	v.SetDefault("api_url", "https://api.stxai.app/api/v1")
 	v.SetDefault("model", "stxai-agent")
 	v.SetDefault("max_history", 20)
 
