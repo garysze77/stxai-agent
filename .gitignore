@@ -4,6 +4,10 @@
 # Environment
 .env
 .env.local
+CREDENTIALS.txt
+
+# Node
+node_modules/
 
 # Python
 __pycache__/
