@@ -83,3 +83,4 @@ def scan_market(market: str = "us", criteria: str = "") -> dict:
 
 
 ALL_TOOLS = [get_stock_price, get_technical_indicators, get_news, scan_market]
+TOOLS_BY_NAME = {t.name: t for t in ALL_TOOLS}

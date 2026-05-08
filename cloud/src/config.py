@@ -1,8 +1,14 @@
+from pathlib import Path
 from pydantic_settings import BaseSettings
+
+_env_file = Path(__file__).resolve().parent.parent / ".env"
 
 
 class Settings(BaseSettings):
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    model_config = {
+        "env_file": str(_env_file),
+        "env_file_encoding": "utf-8",
+    }
 
     # Firebase
     firebase_project_id: str = "stxai-3af70"
