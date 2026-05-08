@@ -43,5 +43,11 @@ class MarketSummaryResponse(BaseModel):
     updated_at: datetime
 
 
+class SubscribeRequest(BaseModel):
+    user_id: str
+    email: str
+    tier: str = "pro"  # "pro" | "premium"
+
+
 class ErrorResponse(BaseModel):
     detail: str

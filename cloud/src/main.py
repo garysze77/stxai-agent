@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from api.routes import router
+from subscription.routes import sub_router, webhook_router
 from models.firebase import init_firebase
 from config import settings
 
@@ -19,6 +20,8 @@ app.add_middleware(
 )
 
 app.include_router(router)
+app.include_router(sub_router)
+app.include_router(webhook_router)
 
 
 @app.on_event("startup")
