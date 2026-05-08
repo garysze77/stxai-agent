@@ -3,12 +3,16 @@ from fastapi import APIRouter, Depends, HTTPException
 from langchain_core.messages import HumanMessage, AIMessage
 
 from api.schemas import (
-    ChatRequest, ChatResponse, AnalyzeResponse,
+    ChatRequest, ChatResponse, AnalyzeResponse, SignalData,
     ScanRequest, NewsResponse, MarketSummaryResponse,
 )
-from api.middleware import verify_api_key
+from api.middleware import verify_api_key, validate_stock_query
 from agent.graph import simple_agent, deep_agent
 from agent.state import AgentState
+from memory.store import (
+    get_cached_report, cache_report, _build_price_update_note,
+)
+from tools.market_data import get_stock_price as _fetch_price
 
 router = APIRouter(prefix="/api/v1")
 
@@ -20,6 +24,29 @@ def _extract_reply(result: dict) -> str:
     return "No response generated."
 
 
+def _get_current_price(ticker: str, market: str = "us") -> float | None:
+    """Fetch current price for a ticker. Returns None on failure."""
+    try:
+        data = _fetch_price(ticker, market)
+        return data.get("price")
+    except Exception:
+        return None
+
+
+def _extract_signal(result: dict) -> SignalData | None:
+    """Extract signal data from graph result."""
+    score = result.get("confidence_score", 0)
+    bias = result.get("directional_bias", "")
+    strength = result.get("signal_strength", "")
+    if not bias and not score and not strength:
+        return None
+    return SignalData(
+        directional_bias=bias,
+        confidence_score=score,
+        signal_strength=strength,
+    )
+
+
 @router.get("/health")
 async def health():
     return {"status": "ok", "service": "stxai-cloud"}
@@ -27,6 +54,9 @@ async def health():
 
 @router.post("/chat", response_model=ChatResponse)
 async def chat(body: ChatRequest, user: dict = Depends(verify_api_key)):
+    # Reject non-stock queries
+    validate_stock_query(body.message)
+
     # Choose agent: deep_analysis=true → multi-agent debate
     if body.deep_analysis:
         graph = deep_agent
@@ -38,6 +68,7 @@ async def chat(body: ChatRequest, user: dict = Depends(verify_api_key)):
         user_id=user["id"],
         subscription_tier=user.get("subscription_tier", "free"),
         session_id=body.session_id or "",
+        ticker=body.ticker or "",
     )
     try:
         result = await graph.ainvoke(state)
@@ -47,22 +78,50 @@ async def chat(body: ChatRequest, user: dict = Depends(verify_api_key)):
     return ChatResponse(
         reply=_extract_reply(result),
         session_id=body.session_id or "default",
+        signal=_extract_signal(result),
     )
 
 
 @router.get("/analyze/{ticker}", response_model=AnalyzeResponse)
 async def analyze(ticker: str, user: dict = Depends(verify_api_key)):
-    # Always use deep multi-agent for the dedicated analysis endpoint
+    ticker = ticker.upper()
+
+    # ── Cache check ──
+    cached = get_cached_report(ticker)
+    if cached:
+        new_price = _get_current_price(ticker)
+        note = _build_price_update_note(
+            ticker, cached["price"], new_price, cached["cached_at"],
+        )
+        return AnalyzeResponse(
+            ticker=ticker,
+            name=ticker,
+            price=new_price,
+            summary=note + cached["final_report"],
+        )
+
+    # ── Cache miss: run full multi-agent debate ──
     state = AgentState(
         messages=[HumanMessage(content=f"Analyze {ticker} in depth. Use the multi-agent debate framework: build bull case, bear case, and synthesize a comprehensive analysis.")],
         user_id=user["id"],
         subscription_tier=user.get("subscription_tier", "free"),
+        ticker=ticker,
     )
     result = await deep_agent.ainvoke(state)
+    summary = _extract_reply(result)
+
+    # Cache the result for future requests
+    price = _get_current_price(ticker)
+    bull = result.get("bullish_thesis", "")
+    bear = result.get("bearish_thesis", "")
+    cache_report(ticker, bull, bear, summary, price)
+
     return AnalyzeResponse(
-        ticker=ticker.upper(),
-        name=ticker.upper(),
-        summary=_extract_reply(result),
+        ticker=ticker,
+        name=ticker,
+        price=price,
+        summary=summary,
+        signal=_extract_signal(result),
     )
 
 
@@ -91,6 +150,7 @@ async def news(ticker: str, user: dict = Depends(verify_api_key)):
         messages=[HumanMessage(content=f"Get the latest news for {ticker}")],
         user_id=user["id"],
         subscription_tier=tier,
+        ticker=ticker.upper(),
     )
     result = await simple_agent.ainvoke(state)
     return NewsResponse(ticker=ticker.upper(), articles=[{"summary": _extract_reply(result)}])

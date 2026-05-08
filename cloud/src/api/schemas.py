@@ -9,10 +9,17 @@ class ChatRequest(BaseModel):
     deep_analysis: bool = False
 
 
+class SignalData(BaseModel):
+    directional_bias: str = ""
+    confidence_score: int = 0
+    signal_strength: str = ""
+
+
 class ChatResponse(BaseModel):
     reply: str
     session_id: str
     tokens_used: int | None = None
+    signal: SignalData | None = None
 
 
 class AnalyzeRequest(BaseModel):
@@ -26,6 +33,7 @@ class AnalyzeResponse(BaseModel):
     currency: str = "USD"
     summary: str
     technical_signals: dict | None = None
+    signal: SignalData | None = None
 
 
 class ScanRequest(BaseModel):

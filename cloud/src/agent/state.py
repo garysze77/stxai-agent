@@ -14,3 +14,10 @@ class AgentState:
     tool_results: dict[str, Any] = field(default_factory=dict)
     bullish_thesis: str = ""
     bearish_thesis: str = ""
+    ticker: str = ""
+    memory_context: str = ""
+    # v0.5 signal fields
+    signal_card: str = ""
+    directional_bias: str = ""
+    confidence_score: int = 0
+    signal_strength: str = ""
