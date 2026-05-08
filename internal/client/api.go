@@ -30,8 +30,9 @@ func New(baseURL, apiKey string) *Client {
 }
 
 type ChatRequest struct {
-	Message string `json:"message"`
-	Session string `json:"session_id,omitempty"`
+	Message      string `json:"message"`
+	Session      string `json:"session_id,omitempty"`
+	DeepAnalysis bool   `json:"deep_analysis"`
 }
 
 type ChatResponse struct {
@@ -54,8 +55,8 @@ type AnalyzeResponse struct {
 	Summary   string             `json:"summary"`
 }
 
-func (c *Client) Chat(message, session string) (*ChatResponse, error) {
-	body := ChatRequest{Message: message, Session: session}
+func (c *Client) Chat(message, session string, deep bool) (*ChatResponse, error) {
+	body := ChatRequest{Message: message, Session: session, DeepAnalysis: deep}
 	b, _ := json.Marshal(body)
 
 	req, err := http.NewRequest("POST", c.BaseURL+"/chat", bytes.NewReader(b))
@@ -88,8 +89,8 @@ func (c *Client) Chat(message, session string) (*ChatResponse, error) {
 	return &cr, nil
 }
 
-func (c *Client) ChatStream(message, session string, onChunk func(string)) error {
-	body := ChatRequest{Message: message, Session: session}
+func (c *Client) ChatStream(message, session string, deep bool, onChunk func(string)) error {
+	body := ChatRequest{Message: message, Session: session, DeepAnalysis: deep}
 	b, _ := json.Marshal(body)
 
 	req, err := http.NewRequest("POST", c.BaseURL+"/chat", bytes.NewReader(b))

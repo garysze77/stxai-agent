@@ -42,9 +42,14 @@ func runChat(_ *cobra.Command, _ []string) error {
 
 	reader := bufio.NewReader(os.Stdin)
 	sessionID := fmt.Sprintf("cli:%d", os.Getpid())
+	deepMode := false
 
 	for {
-		fmt.Print("📊 > ")
+		if deepMode {
+			fmt.Print("🔬 > ")
+		} else {
+			fmt.Print("📊 > ")
+		}
 		input, err := reader.ReadString('\n')
 		if err != nil {
 			break
@@ -60,37 +65,52 @@ func runChat(_ *cobra.Command, _ []string) error {
 			return nil
 		case "/help":
 			fmt.Println("Commands:")
-			fmt.Println("  /analyze <ticker>  — Quick stock analysis")
+			fmt.Println("  /analyze <ticker>  — Full multi-agent deep analysis")
+			fmt.Println("  /deep              — Toggle deep analysis mode (Bull vs Bear debate)")
+			fmt.Println("  /clear             — Clear session history")
 			fmt.Println("  /quit              — Exit chat")
 			fmt.Println("  /help              — Show this help")
 			fmt.Println()
 			fmt.Println("Or just ask about any US or HK stock:")
 			fmt.Println("  AAPL price? | TSLA RSI? | 港股 0700 現價？")
+			if deepMode {
+				fmt.Println("🔬 Deep analysis mode ON — multi-agent debate + full report")
+			}
 			fmt.Println()
 			continue
 		case "/clear":
 			sessionID = fmt.Sprintf("cli:%d:%d", os.Getpid(), os.Getpid())
 			fmt.Println("✅ Session cleared.")
 			continue
+		case "/deep":
+			deepMode = !deepMode
+			if deepMode {
+				fmt.Println("🔬 Deep analysis mode ON — multi-agent debate + full report")
+			} else {
+				fmt.Println("📊 Deep analysis mode OFF — quick responses")
+			}
+			continue
 		}
 
 		if strings.HasPrefix(input, "/analyze ") {
 			ticker := strings.TrimSpace(strings.TrimPrefix(input, "/analyze "))
+			fmt.Print("🔬 Running multi-agent deep analysis... ")
 			ar, err := c.Analyze(ticker)
 			if err != nil {
 				fmt.Printf("❌ %s\n\n", err.Error())
 				continue
 			}
-			fmt.Printf("\n📈 %s  $%.2f (%.2f%%)\n", ar.Ticker, ar.Price, ar.Change)
-			fmt.Printf("RSI: %.1f  |  MACD: %.2f\n", ar.RSI, ar.MACD)
-			fmt.Printf("MA50: $%.2f  |  MA200: $%.2f\n", ar.MA50, ar.MA200)
-			fmt.Printf("Bollinger: $%.2f — $%.2f\n\n", ar.BollLower, ar.BollUpper)
-			fmt.Printf("%s\n\n", ar.Summary)
+			fmt.Println()
+			fmt.Printf("\n%s\n\n", ar.Summary)
 			continue
 		}
 
-		fmt.Print("🤖 ")
-		resp, err := c.Chat(input, sessionID)
+		if deepMode {
+			fmt.Print("🔬 ")
+		} else {
+			fmt.Print("🤖 ")
+		}
+		resp, err := c.Chat(input, sessionID, deepMode)
 		if err != nil {
 			fmt.Printf("❌ %s\n\n", err.Error())
 			continue

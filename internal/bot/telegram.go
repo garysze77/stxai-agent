@@ -112,7 +112,7 @@ func (b *Bot) handleText(c tele.Context) error {
 	// Save user message
 	b.store.SaveMessage(sessionID, "user", message)
 
-	resp, err := b.client.Chat(message, sessionID)
+	resp, err := b.client.Chat(message, sessionID, false)
 	if err != nil {
 		return c.Send("❌ " + err.Error())
 	}
