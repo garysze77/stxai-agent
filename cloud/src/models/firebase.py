@@ -1,3 +1,5 @@
+import json
+
 import firebase_admin
 from firebase_admin import credentials, firestore
 from config import settings
@@ -5,17 +7,26 @@ from config import settings
 _db: firestore.Client | None = None
 
 
+def _get_credentials():
+    """Resolve credentials from env var — supports file path or raw JSON string."""
+    val = (settings.google_application_credentials or "").strip()
+    if not val:
+        return credentials.ApplicationDefault()
+
+    # Railway / cloud: JSON string directly in env var
+    if val.startswith("{"):
+        return credentials.Certificate(json.loads(val))
+
+    # Local dev: file path to service account JSON
+    return credentials.Certificate(val)
+
+
 def init_firebase():
     global _db
     if _db is not None:
         return _db
 
-    cred_path = settings.google_application_credentials
-    if cred_path:
-        cred = credentials.Certificate(cred_path)
-    else:
-        cred = credentials.ApplicationDefault()
-
+    cred = _get_credentials()
     firebase_admin.initialize_app(
         cred, {"projectId": settings.firebase_project_id}
     )
