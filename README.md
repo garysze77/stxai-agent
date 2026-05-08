@@ -1,11 +1,11 @@
 # STX AI — 自主金融 AI Agent
 
-Open-source autonomous AI agent for **US & HK stock market analysis**. Self-hosted Go client + Cloud API backend. Subscription required for API access.
+AI-powered US & HK stock market analysis. Subscription required for API access.
 
 ## Architecture
 
 ```
-stxai CLI / Telegram Bot (Go, open source)
+stxai CLI / Telegram Bot (Go, open source)  →  https://github.com/garysze77/stxai-agent
     │
     ▼
 STX AI Cloud API (Python FastAPI, Railway)
@@ -15,68 +15,28 @@ STX AI Cloud API (Python FastAPI, Railway)
     └── Firebase Auth + Stripe (subscription + usage tracking)
 ```
 
-| Component | Stack | Purpose |
-|-----------|-------|---------|
-| `agent/` | Go | CLI + Telegram Bot, single binary, ~9MB |
-| `cloud/` | Python FastAPI | AI agent backend, tools, LLM routing |
-| `web/` | Next.js | Landing page + user dashboard |
-
-## Features
-
-- **Comprehensive stock analysis** — technical indicators, fundamentals, analyst consensus, institutional flows
-- **US & HK markets** — real-time data via yfinance and akshare
-- **CLI + Telegram bot** — same AI, two interfaces
-- **Single binary** — no runtime dependencies, works on macOS/Linux/Windows
-- **LLM failover** — Puter AI primary, MiniMax M2.7 automatic fallback
+| Component | Repo | Stack |
+|-----------|------|-------|
+| Agent Client | [stxai-agent](https://github.com/garysze77/stxai-agent) (Public) | Go, single binary |
+| Cloud API | `cloud/` (Private) | Python FastAPI |
+| Landing Page | `web/` (Private) | Next.js |
 
 ## Quick Start
 
 ```bash
-# 1. Install
-curl -fsSL https://raw.githubusercontent.com/garysze77/stxai/main/agent/install.sh | sh
+# Install the open-source agent client
+curl -fsSL https://raw.githubusercontent.com/garysze77/stxai-agent/main/install.sh | sh
 
-# 2. Configure — get your API key at https://stxai.vercel.app
+# Configure — get your API key at https://stxai.vercel.app
 stxai setup
 
-# 3. Start chatting
+# Start chatting
 stxai chat
-
-# 4. Or launch Telegram bot
-stxai start
 ```
 
-### Chat Commands
+See [stxai-agent](https://github.com/garysze77/stxai-agent) for full agent documentation.
 
-```
-/analyze AAPL    — Full stock analysis (price, technical, fundamentals, analyst, institutional)
-/analyze 0700    — HK stock analysis (Tencent)
-/clear           — Clear session history
-/help            — Show help
-/quit            — Exit
-```
-
-## Build from Source
-
-```bash
-git clone https://github.com/garysze77/stxai.git
-cd stxai/agent
-make build        # Local build → bin/stxai
-make build-all    # Cross-compile all platforms
-make install      # Install to /usr/local/bin
-```
-
-Requires: Go 1.22+
-
-## Install Methods
-
-| Method | Command |
-|--------|---------|
-| Shell script | `curl -fsSL https://raw.githubusercontent.com/garysze77/stxai/main/agent/install.sh \| sh` |
-| GitHub Releases | [Download binary](https://github.com/garysze77/stxai/releases) |
-| Homebrew | `brew install garysze77/stxai/stxai` (coming soon) |
-| Build from source | `make build` |
-
-## Cloud API
+## Cloud API (Private)
 
 ```bash
 cd cloud
