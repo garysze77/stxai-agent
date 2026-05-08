@@ -21,6 +21,9 @@ dependencies = [
     "langgraph>=0.2.0",
     "langchain>=0.3.0",
     "langchain-openai>=0.2.0",
+    "yfinance>=0.2.0",
+    "pandas>=2.0.0",
+    "numpy>=2.0.0",
 ]
 
 [project.optional-dependencies]
@@ -32,6 +35,9 @@ dev = [
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools]
+py-modules = ["config"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
