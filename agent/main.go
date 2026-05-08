@@ -9,9 +9,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var version = "dev"
+
 var rootCmd = &cobra.Command{
-	Use:   "stxai",
-	Short: "STX AI Agent — Autonomous Financial AI Agent",
+	Use:     "stxai",
+	Version: version,
+	Short:   "STX AI Agent — Autonomous Financial AI Agent",
 	Long: `STX AI is an open-source autonomous AI agent for US & HK stock analysis.
 
 Self-hosted client that connects to the STX AI Cloud API.

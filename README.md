@@ -1,40 +1,103 @@
-# STX AI - 自主金融 AI Agent
+# STX AI — 自主金融 AI Agent
 
-開源金融 AI Agent，專注美股及港股市場分析。用戶自行安裝 Agent 客戶端，AI 分析能力由 STX AI Cloud API 提供，需 Subscription 獲取 API Key。
+Open-source autonomous AI agent for **US & HK stock market analysis**. Self-hosted Go client + Cloud API backend. Subscription required for API access.
 
-## 架構
+## Architecture
 
-- `cloud/` — STX AI Cloud API (付費 SaaS，部署於 Railway)
-- `web/` — Landing Page + User Dashboard (Vercel + Firebase Auth)
-- `agent/` — STX AI Agent 客戶端 (開源，pip install)
+```
+stxai CLI / Telegram Bot (Go, open source)
+    │
+    ▼
+STX AI Cloud API (Python FastAPI, Railway)
+    │
+    ├── Puter AI (primary LLM) → MiniMax M2.7 (fallback)
+    ├── yfinance / akshare (real market data)
+    └── Firebase Auth + Stripe (subscription + usage tracking)
+```
 
-## 快速開始
+| Component | Stack | Purpose |
+|-----------|-------|---------|
+| `agent/` | Go | CLI + Telegram Bot, single binary, ~9MB |
+| `cloud/` | Python FastAPI | AI agent backend, tools, LLM routing |
+| `web/` | Next.js | Landing page + user dashboard |
 
-### Cloud API
+## Features
+
+- **Comprehensive stock analysis** — technical indicators, fundamentals, analyst consensus, institutional flows
+- **US & HK markets** — real-time data via yfinance and akshare
+- **CLI + Telegram bot** — same AI, two interfaces
+- **Single binary** — no runtime dependencies, works on macOS/Linux/Windows
+- **LLM failover** — Puter AI primary, MiniMax M2.7 automatic fallback
+
+## Quick Start
+
+```bash
+# 1. Install
+curl -fsSL https://raw.githubusercontent.com/garysze77/stxai/main/agent/install.sh | sh
+
+# 2. Configure — get your API key at https://stxai.vercel.app
+stxai setup
+
+# 3. Start chatting
+stxai chat
+
+# 4. Or launch Telegram bot
+stxai start
+```
+
+### Chat Commands
+
+```
+/analyze AAPL    — Full stock analysis (price, technical, fundamentals, analyst, institutional)
+/analyze 0700    — HK stock analysis (Tencent)
+/clear           — Clear session history
+/help            — Show help
+/quit            — Exit
+```
+
+## Build from Source
+
+```bash
+git clone https://github.com/garysze77/stxai.git
+cd stxai/agent
+make build        # Local build → bin/stxai
+make build-all    # Cross-compile all platforms
+make install      # Install to /usr/local/bin
+```
+
+Requires: Go 1.22+
+
+## Install Methods
+
+| Method | Command |
+|--------|---------|
+| Shell script | `curl -fsSL https://raw.githubusercontent.com/garysze77/stxai/main/agent/install.sh \| sh` |
+| GitHub Releases | [Download binary](https://github.com/garysze77/stxai/releases) |
+| Homebrew | `brew install garysze77/stxai/stxai` (coming soon) |
+| Build from source | `make build` |
+
+## Cloud API
 
 ```bash
 cd cloud
 cp .env.example .env
-# 編輯 .env 填上必要設定
-pip install -e .
+# Edit .env with your credentials
+pip install .
 uvicorn src.main:app --reload
 ```
 
-### Agent Client (Phase 6)
+Requires: Python 3.12+, Firebase, Stripe, Puter AI, MiniMax accounts.
 
-```bash
-pip install stxai-agent
-stxai setup
-stxai start
-```
+## Subscription Plans
 
-## 技術棧
+| Tier | Monthly (HKD) | Daily Quota | Features |
+|------|---------------|-------------|----------|
+| Free | $0 | 10 req | Basic quotes, simple Q&A |
+| Pro | $98 | 200 req | Technical analysis, news, watchlist |
+| Premium | $298 | 1000 req | Advanced scanning, priority queue |
 
-| 組件 | 技術 |
-|------|------|
-| Cloud API | Python FastAPI (Railway) |
-| LLM | Puter API (主) + MiniMax (後備) |
-| Auth + DB | Firebase (Auth + Firestore) |
-| 支付 | Stripe |
-| Landing | Next.js (Vercel) |
-| Agent | Python (開源) |
+[Subscribe →](https://stxai.vercel.app)
+
+## License
+
+MIT — see [LICENSE](LICENSE)
