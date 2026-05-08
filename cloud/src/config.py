@@ -20,7 +20,7 @@ class Settings(BaseSettings):
 
     # MiniMax (fallback)
     minimax_api_key: str = ""
-    minimax_api_url: str = "https://api.minimaxi.chat/v1"
+    minimax_api_url: str = "https://api.minimax.io/v1"
 
     # Stripe
     stripe_secret_key: str = ""

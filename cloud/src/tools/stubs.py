@@ -1,11 +1,15 @@
 """Financial analysis tools for the STX AI agent.
 
-Tries real data from yfinance first, falls back to mock data on failure.
+Uses real data from yfinance.
 """
 from langchain_core.tools import tool
-from tools.market_data import get_stock_price as _real_price
-from tools.market_data import scan_market as _real_scan
+from tools.market_data import get_stock_price as _real_price, scan_market as _real_scan
 from tools.technical import get_technical_indicators as _real_ta
+from tools.fundamental import (
+    get_analyst_ratings as _real_analyst,
+    get_fundamental_data as _real_fundamental,
+    get_institutional_holders as _real_institutional,
+)
 
 
 @tool
@@ -33,6 +37,48 @@ def get_technical_indicators(ticker: str, market: str = "us") -> dict:
     result = _real_ta(ticker, market)
     if "error" in result:
         return _mock_ta(ticker, market)
+    return result
+
+
+@tool
+def get_analyst_ratings(ticker: str, market: str = "us") -> dict:
+    """Get Wall Street analyst consensus rating, price targets, and number of analysts covering the stock.
+
+    Args:
+        ticker: Stock ticker symbol
+        market: "us" or "hk"
+    """
+    result = _real_analyst(ticker, market)
+    if "error" in result:
+        return {"ticker": ticker.upper(), "note": "Analyst data unavailable"}
+    return result
+
+
+@tool
+def get_fundamental_data(ticker: str, market: str = "us") -> dict:
+    """Get fundamental financial metrics: P/E, EPS, revenue growth, profit margins, ROE, debt/equity, dividends, market cap.
+
+    Args:
+        ticker: Stock ticker symbol
+        market: "us" or "hk"
+    """
+    result = _real_fundamental(ticker, market)
+    if "error" in result:
+        return {"ticker": ticker.upper(), "note": "Fundamental data unavailable"}
+    return result
+
+
+@tool
+def get_institutional_holders(ticker: str, market: str = "us") -> dict:
+    """Get institutional ownership percentage and top institutional holders (big funds, banks).
+
+    Args:
+        ticker: Stock ticker symbol
+        market: "us" or "hk"
+    """
+    result = _real_institutional(ticker, market)
+    if "error" in result:
+        return {"ticker": ticker.upper(), "note": "Institutional data unavailable"}
     return result
 
 
@@ -77,6 +123,7 @@ def scan_market(market: str = "us", criteria: str = "") -> dict:
 
 # ── Mock fallbacks ──
 
+
 def _mock_price(ticker: str, market: str) -> dict:
     return {
         "ticker": ticker.upper(), "market": market,
@@ -113,5 +160,13 @@ def _mock_scan(market: str, criteria: str) -> dict:
     }
 
 
-ALL_TOOLS = [get_stock_price, get_technical_indicators, get_news, scan_market]
+ALL_TOOLS = [
+    get_stock_price,
+    get_technical_indicators,
+    get_analyst_ratings,
+    get_fundamental_data,
+    get_institutional_holders,
+    get_news,
+    scan_market,
+]
 TOOLS_BY_NAME = {t.name: t for t in ALL_TOOLS}
