@@ -13,6 +13,7 @@ import (
 	"github.com/garysze77/stxai-agent/internal/config"
 	"github.com/garysze77/stxai-agent/internal/service"
 	"github.com/garysze77/stxai-agent/internal/store"
+	"github.com/garysze77/stxai-agent/internal/web"
 
 	"github.com/spf13/cobra"
 )
@@ -23,7 +24,7 @@ func StartCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "start",
 		Short: "Start the STX AI Agent (TG Bot + Web UI)",
-		Long:  "Launch the Telegram bot that provides AI-powered stock analysis via the STX AI Cloud API.",
+		Long:  "Launch the Telegram bot and local Web UI for AI-powered stock analysis via the STX AI Cloud API.",
 		RunE:  runStart,
 	}
 	cmd.Flags().BoolVar(&svcFlag, "svc", false, "Run as a Windows service")
@@ -35,14 +36,6 @@ func runStart(_ *cobra.Command, _ []string) error {
 	cfg, err := config.Load()
 	if err != nil {
 		return fmt.Errorf("load config: %w (run 'stxai setup' first)", err)
-	}
-
-	if cfg.Telegram == "" {
-		return fmt.Errorf("telegram bot token not set — run 'stxai setup' and add a token from @BotFather")
-	}
-
-	if cfg.APIKey == "" {
-		return fmt.Errorf("API key not set — run 'stxai setup'")
 	}
 
 	s, err := store.Open()
@@ -64,13 +57,32 @@ func runStart(_ *cobra.Command, _ []string) error {
 		cancel()
 	}()
 
-	runAgent := func(ctx context.Context) error {
-		b, err := bot.New(cfg.Telegram, c, s)
-		if err != nil {
-			return fmt.Errorf("create bot: %w", err)
+	// Start web UI server
+	ws := web.New(c, cfg, "8080")
+	go func() {
+		if err := ws.Start(); err != nil {
+			log.Printf("Web UI: %v", err)
 		}
-		fmt.Println("Agent is running. Press Ctrl+C to stop.")
-		return b.Start(ctx)
+	}()
+	web.OpenBrowser(ws.Addr())
+
+	runAgent := func(ctx context.Context) error {
+		hasTG := cfg.Telegram != ""
+		if hasTG {
+			b, err := bot.New(cfg.Telegram, c, s)
+			if err != nil {
+				return fmt.Errorf("create bot: %w", err)
+			}
+			fmt.Println("Agent is running. Press Ctrl+C to stop.")
+			fmt.Printf("🌐 Web UI → %s\n", ws.Addr())
+			return b.Start(ctx)
+		}
+
+		// No Telegram token — just keep web UI alive
+		fmt.Println("Web UI only mode (no Telegram bot configured). Press Ctrl+C to stop.")
+		fmt.Printf("🌐 Web UI → %s\n", ws.Addr())
+		<-ctx.Done()
+		return nil
 	}
 
 	if svcFlag {

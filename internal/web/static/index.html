@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STX AI — Financial Agent</title>
+<style>
+:root {
+  --bg: #0c0e12;
+  --panel: #161820;
+  --border: #222530;
+  --text: #c8ccd4;
+  --dim: #6b7080;
+  --accent: #00d4aa;
+  --red: #ff4757;
+  --yellow: #ffa502;
+  --green: #2ed573;
+  --input-bg: #1a1d27;
+  --radius: 10px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg); color: var(--text);
+  height: 100vh; display: flex; flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Header ── */
+header {
+  background: var(--panel); border-bottom: 1px solid var(--border);
+  padding: 10px 20px; display: flex; align-items: center; gap: 10px;
+  flex-shrink: 0;
+}
+header .logo { font-weight: 700; font-size: 16px; color: var(--accent); letter-spacing: 1px; }
+header .ver { font-size: 11px; color: var(--dim); margin-left: 4px; }
+header .status { margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--dim); }
+header .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+header .dot.off { background: var(--red); }
+
+/* ── Main Chat Area ── */
+#chat-area {
+  flex: 1; overflow-y: auto; padding: 16px 20px;
+  display: flex; flex-direction: column; gap: 14px;
+  scroll-behavior: smooth;
+}
+.msg {
+  max-width: 85%; padding: 12px 16px; border-radius: var(--radius);
+  font-size: 14px; line-height: 1.6; word-wrap: break-word;
+  animation: fadeIn .2s ease;
+}
+@keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+.msg.user {
+  align-self: flex-end; background: #1a3a2e; color: #d0f0e0;
+  border-bottom-right-radius: 2px;
+}
+.msg.agent {
+  align-self: flex-start; background: var(--panel); color: var(--text);
+  border-bottom-left-radius: 2px;
+  border: 1px solid var(--border);
+}
+.msg.agent strong { color: #fff; }
+.msg .ticker-tag {
+  display: inline-block; background: var(--accent); color: #000;
+  font-weight: 700; padding: 2px 8px; border-radius: 4px; font-size: 13px;
+  margin-bottom: 6px;
+}
+.msg .signal-card {
+  margin-top: 10px; padding: 12px; border-radius: 8px;
+  background: #1a1d27; border-left: 3px solid var(--accent);
+  font-size: 13px;
+}
+.msg .signal-card.bullish { border-left-color: var(--green); }
+.msg .signal-card.bearish { border-left-color: var(--red); }
+.msg .signal-card.neutral { border-left-color: var(--yellow); }
+.signal-card .bar {
+  display: inline-block; height: 4px; border-radius: 2px;
+  background: var(--dim); margin-left: 4px; vertical-align: middle;
+}
+
+/* ── Bottom Input ── */
+#input-area {
+  background: var(--panel); border-top: 1px solid var(--border);
+  padding: 12px 20px; flex-shrink: 0;
+}
+#quick-actions {
+  display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap;
+}
+#quick-actions button {
+  background: var(--input-bg); color: var(--text); border: 1px solid var(--border);
+  padding: 6px 13px; border-radius: 6px; cursor: pointer; font-size: 12px;
+  font-weight: 500; transition: all .15s; white-space: nowrap;
+}
+#quick-actions button:hover { background: #252a36; border-color: var(--accent); color: #fff; }
+#quick-actions button.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+#input-row { display: flex; gap: 8px; }
+#msg-input {
+  flex:1; background: var(--input-bg); color: var(--text);
+  border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 14px; font-size: 14px; outline: none;
+  font-family: inherit; resize: none;
+}
+#msg-input:focus { border-color: var(--accent); }
+#msg-input::placeholder { color: var(--dim); }
+#send-btn {
+  background: var(--accent); color: #000; border: none;
+  border-radius: 8px; padding: 10px 20px; font-weight: 700;
+  cursor: pointer; font-size: 14px; transition: opacity .15s;
+}
+#send-btn:hover { opacity: .85; }
+#send-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+/* ── Setup Overlay ── */
+#setup-overlay {
+  position: fixed; inset: 0; background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100;
+}
+#setup-box {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 14px; padding: 36px 32px; width: 440px; max-width: 90vw;
+}
+#setup-box h2 { font-size: 20px; color: #fff; margin-bottom: 4px; }
+#setup-box .sub { font-size: 13px; color: var(--dim); margin-bottom: 22px; }
+#setup-box label { display: block; font-size: 12px; font-weight: 600; color: var(--dim); margin-bottom: 4px; margin-top: 14px; text-transform: uppercase; letter-spacing: .5px; }
+#setup-box input {
+  width: 100%; background: var(--input-bg); color: var(--text);
+  border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 12px; font-size: 14px; outline: none;
+}
+#setup-box input:focus { border-color: var(--accent); }
+#setup-box .hint { font-size: 11px; color: var(--dim); margin-top: 4px; }
+#setup-box .hint a { color: var(--accent); }
+#setup-actions { display: flex; gap: 8px; margin-top: 22px; }
+#setup-actions button {
+  flex: 1; padding: 10px; border-radius: 8px; font-weight: 600;
+  cursor: pointer; font-size: 14px; border: none;
+}
+#setup-save { background: var(--accent); color: #000; }
+#setup-skip { background: var(--input-bg); color: var(--text); border: 1px solid var(--border); }
+#setup-error { color: var(--red); font-size: 12px; margin-top: 8px; display: none; }
+
+/* ── Typing Indicator ── */
+.typing { display: flex; gap: 4px; padding: 8px 16px; }
+.typing span {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--dim);
+  animation: bounce 1.2s infinite;
+}
+.typing span:nth-child(2) { animation-delay: .2s; }
+.typing span:nth-child(3) { animation-delay: .4s; }
+@keyframes bounce {
+  0%,60%,100% { transform: translateY(0); }
+  30% { transform: translateY(-6px); }
+}
+
+/* ── Toast ── */
+#toast {
+  position: fixed; top: 16px; right: 16px; z-index: 200;
+  background: var(--red); color: #fff; padding: 10px 18px;
+  border-radius: 8px; font-size: 13px; font-weight: 500;
+  opacity: 0; transform: translateY(-10px); transition: all .25s;
+  pointer-events: none;
+}
+#toast.show { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <span class="logo">STX AI</span><span class="ver">Agent</span>
+  <span class="status"><span class="dot" id="status-dot"></span><span id="status-text">Ready</span></span>
+</header>
+
+<!-- Chat -->
+<div id="chat-area"></div>
+
+<!-- Input -->
+<div id="input-area">
+  <div id="quick-actions">
+    <button onclick="quickAction('analyze')" id="btn-analyze">📈 Analyze</button>
+    <button onclick="quickAction('signal')" id="btn-signal">⚡ Signal</button>
+    <button onclick="quickAction('news')" id="btn-news">📰 News</button>
+    <button onclick="quickAction('scan-us')" id="btn-scan-us">📊 US Scan</button>
+    <button onclick="quickAction('scan-hk')" id="btn-scan-hk">🇭🇰 HK Scan</button>
+    <button onclick="quickAction('clear')" id="btn-clear">🗑 Clear</button>
+  </div>
+  <div id="input-row">
+    <input id="msg-input" placeholder="Enter a ticker or ask a question..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}">
+    <button id="send-btn" onclick="sendMessage()">Send</button>
+  </div>
+</div>
+
+<!-- Setup Overlay -->
+<div id="setup-overlay">
+  <div id="setup-box">
+    <h2>Welcome to STX AI</h2>
+    <p class="sub">Configure your agent to get started.</p>
+    <label>API Key</label>
+    <input id="setup-apikey" placeholder="sk-..." autocomplete="off">
+    <p class="hint">Get your key at <a href="https://stxai.vercel.app/dashboard" target="_blank">stxai.vercel.app</a></p>
+    <label>Telegram Bot Token <span style="font-weight:400;text-transform:none;">(optional)</span></label>
+    <input id="setup-token" placeholder="123:abc..." autocomplete="off">
+    <p class="hint">From <a href="https://t.me/BotFather" target="_blank">@BotFather</a> — skip if you only use Web UI</p>
+    <div id="setup-error"></div>
+    <div id="setup-actions">
+      <button id="setup-skip" onclick="skipSetup()">Skip for now</button>
+      <button id="setup-save" onclick="saveSetup()">Save & Start</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── State ──
+let mode = '';        // '', 'analyze', 'signal', 'news'
+let configured = false;
+
+// ── Init ──
+(async function init() {
+  try {
+    const r = await fetch('/api/config');
+    const cfg = await r.json();
+    if (cfg.configured) {
+      configured = true;
+      document.getElementById('setup-overlay').style.display = 'none';
+      addMsg('agent', '**Welcome to STX AI.**\n\nI\'m your autonomous financial AI agent. Type a ticker (e.g. *AAPL*, *0700.HK*) or use the quick actions below.');
+    }
+  } catch(e) {
+    // Server not ready yet
+  }
+  updateStatus();
+})();
+
+// ── Setup ──
+async function saveSetup() {
+  const apiKey = document.getElementById('setup-apikey').value.trim();
+  const token = document.getElementById('setup-token').value.trim();
+  const errEl = document.getElementById('setup-error');
+
+  if (!apiKey) {
+    errEl.textContent = 'API Key is required.';
+    errEl.style.display = 'block';
+    return;
+  }
+  errEl.style.display = 'none';
+
+  try {
+    const r = await fetch('/api/config', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({api_key: apiKey, telegram_token: token})
+    });
+    if (!r.ok) {
+      const e = await r.json();
+      throw new Error(e.error || 'Failed to save');
+    }
+    configured = true;
+    document.getElementById('setup-overlay').style.display = 'none';
+    addMsg('agent', '✅ **Setup complete!**\n\nI\'m ready to analyze stocks. Try typing a ticker or use the buttons below.');
+    updateStatus();
+  } catch(e) {
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+  }
+}
+
+async function skipSetup() {
+  const r = await fetch('/api/config');
+  const cfg = await r.json();
+  if (!cfg.configured) {
+    document.getElementById('setup-error').textContent = 'API Key is required. You can set it up later by visiting /api/config or running stxai setup in terminal.';
+    document.getElementById('setup-error').style.display = 'block';
+    return;
+  }
+  configured = true;
+  document.getElementById('setup-overlay').style.display = 'none';
+  updateStatus();
+}
+
+// ── Quick Actions ──
+function quickAction(action) {
+  clearActiveButtons();
+  const input = document.getElementById('msg-input');
+
+  switch(action) {
+    case 'analyze':
+      mode = 'analyze';
+      document.getElementById('btn-analyze').classList.add('active');
+      input.placeholder = 'Enter stock ticker to analyze (e.g. AAPL, 0700.HK)...';
+      input.focus();
+      addMsg('agent', '🔬 **Analyze mode** — Enter a stock ticker below.');
+      break;
+    case 'signal':
+      mode = 'signal';
+      document.getElementById('btn-signal').classList.add('active');
+      input.placeholder = 'Enter stock ticker for signal (e.g. AAPL, 0700.HK)...';
+      input.focus();
+      addMsg('agent', '⚡ **Signal mode** — Enter a stock ticker below.');
+      break;
+    case 'news':
+      mode = 'news';
+      document.getElementById('btn-news').classList.add('active');
+      input.placeholder = 'Enter stock ticker for news (e.g. AAPL, 0700.HK)...';
+      input.focus();
+      addMsg('agent', '📰 **News mode** — Enter a stock ticker below.');
+      break;
+    case 'scan-us':
+      mode = '';
+      input.placeholder = 'Enter a ticker or ask a question...';
+      runScan('us');
+      break;
+    case 'scan-hk':
+      mode = '';
+      input.placeholder = 'Enter a ticker or ask a question...';
+      runScan('hk');
+      break;
+    case 'clear':
+      mode = '';
+      input.placeholder = 'Enter a ticker or ask a question...';
+      document.getElementById('chat-area').innerHTML = '';
+      fetch('/api/clear', {method:'POST'});
+      break;
+  }
+}
+
+function clearActiveButtons() {
+  document.querySelectorAll('#quick-actions button').forEach(b => b.classList.remove('active'));
+}
+
+// ── Send Message ──
+async function sendMessage() {
+  const input = document.getElementById('msg-input');
+  const text = input.value.trim();
+  if (!text || !configured) return;
+
+  input.value = '';
+  input.placeholder = 'Enter a ticker or ask a question...';
+
+  const currentMode = mode;
+  mode = '';
+  clearActiveButtons();
+
+  addMsg('user', text);
+
+  if (currentMode === 'analyze') {
+    await runAnalyze(text);
+  } else if (currentMode === 'signal') {
+    await runSignal(text);
+  } else if (currentMode === 'news') {
+    await runNews(text);
+  } else {
+    await runChat(text);
+  }
+}
+
+// ── API Calls ──
+async function runChat(message) {
+  const typing = showTyping();
+  try {
+    const r = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({message, session_id: 'web'})
+    });
+    const data = await r.json();
+    hideTyping(typing);
+    if (r.ok) {
+      let display = data.reply;
+      if (data.signal && data.signal.confidence_score > 0) {
+        display += formatSignalInline(data.signal);
+      }
+      addMsg('agent', display);
+    } else {
+      addMsg('agent', '❌ ' + (data.error || 'Request failed'));
+    }
+  } catch(e) {
+    hideTyping(typing);
+    addMsg('agent', '❌ Network error: ' + e.message);
+  }
+}
+
+async function runAnalyze(ticker) {
+  const typing = showTyping();
+  try {
+    const r = await fetch('/api/analyze/' + encodeURIComponent(ticker.trim()));
+    const data = await r.json();
+    hideTyping(typing);
+    if (r.ok) {
+      let display = '📈 **' + escapeHtml(data.ticker || ticker) + '**';
+      if (data.price) display += '  $' + data.price.toFixed(2);
+      display += '\n\n' + (data.summary || 'No analysis available.');
+      if (data.signal && data.signal.confidence_score > 0) {
+        display += '\n\n' + formatSignalInline(data.signal);
+      }
+      addMsg('agent', display);
+    } else {
+      addMsg('agent', '❌ ' + (data.error || 'Analysis failed'));
+    }
+  } catch(e) {
+    hideTyping(typing);
+    addMsg('agent', '❌ Network error: ' + e.message);
+  }
+}
+
+async function runSignal(ticker) {
+  const typing = showTyping();
+  try {
+    const r = await fetch('/api/analyze/' + encodeURIComponent(ticker.trim()));
+    const data = await r.json();
+    hideTyping(typing);
+    if (r.ok) {
+      let display = '⚡ **' + escapeHtml(data.ticker || ticker) + ' Signal**\n\n';
+      if (data.price) display += 'Price: $' + data.price.toFixed(2) + '\n';
+      if (data.signal && data.signal.confidence_score > 0) {
+        display += formatSignalInline(data.signal);
+      } else {
+        display += 'No signal available. Run **Analyze** for a full report.';
+      }
+      addMsg('agent', display);
+    } else {
+      addMsg('agent', '❌ ' + (data.error || 'Signal failed'));
+    }
+  } catch(e) {
+    hideTyping(typing);
+    addMsg('agent', '❌ Network error: ' + e.message);
+  }
+}
+
+async function runNews(ticker) {
+  const typing = showTyping();
+  try {
+    const r = await fetch('/api/news/' + encodeURIComponent(ticker.trim()));
+    const data = await r.json();
+    hideTyping(typing);
+    if (r.ok) {
+      if (!data.articles || data.articles.length === 0) {
+        addMsg('agent', '📭 No recent news for **' + escapeHtml(ticker) + '**.');
+      } else {
+        let display = '📰 **' + escapeHtml(ticker.toUpperCase()) + ' News**\n';
+        data.articles.slice(0,5).forEach(a => {
+          display += '• ' + escapeHtml(a.summary || a.title || '') + '\n';
+        });
+        addMsg('agent', display);
+      }
+    } else {
+      addMsg('agent', '❌ ' + (data.error || 'News fetch failed'));
+    }
+  } catch(e) {
+    hideTyping(typing);
+    addMsg('agent', '❌ Network error: ' + e.message);
+  }
+}
+
+async function runScan(market) {
+  const typing = showTyping();
+  const marketName = market === 'hk' ? 'HK' : 'US';
+  try {
+    const r = await fetch('/api/scan', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({market, criteria: ''})
+    });
+    const data = await r.json();
+    hideTyping(typing);
+    if (r.ok) {
+      addMsg('agent', '📊 **' + marketName + ' Market Scan**\n\n' + (data.reply || 'No results.'));
+    } else {
+      addMsg('agent', '❌ ' + (data.error || 'Scan failed'));
+    }
+  } catch(e) {
+    hideTyping(typing);
+    addMsg('agent', '❌ Network error: ' + e.message);
+  }
+}
+
+// ── UI Helpers ──
+function addMsg(type, text) {
+  const area = document.getElementById('chat-area');
+  const div = document.createElement('div');
+  div.className = 'msg ' + type;
+  div.innerHTML = renderMarkdown(text);
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
+function showTyping() {
+  const area = document.getElementById('chat-area');
+  const div = document.createElement('div');
+  div.className = 'typing';
+  div.id = 'typing-indicator';
+  div.innerHTML = '<span></span><span></span><span></span>';
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+  document.getElementById('send-btn').disabled = true;
+  setStatus('thinking');
+  return div;
+}
+
+function hideTyping(el) {
+  if (el && el.parentNode) el.remove();
+  document.getElementById('send-btn').disabled = false;
+  updateStatus();
+}
+
+function setStatus(state) {
+  const dot = document.getElementById('status-dot');
+  const txt = document.getElementById('status-text');
+  if (state === 'thinking') {
+    dot.className = 'dot'; dot.style.background = 'var(--yellow)';
+    txt.textContent = 'Thinking...';
+  } else {
+    dot.className = configured ? 'dot' : 'dot off';
+    txt.textContent = configured ? 'Ready' : 'Not configured';
+  }
+}
+
+function updateStatus() {
+  const dot = document.getElementById('status-dot');
+  const txt = document.getElementById('status-text');
+  dot.className = configured ? 'dot' : 'dot off';
+  txt.textContent = configured ? 'Ready' : 'Not configured';
+}
+
+function formatSignalInline(s) {
+  let emoji = '⚪';
+  switch(s.directional_bias) {
+    case 'Bullish-leaning': emoji = '🟢'; break;
+    case 'Bearish-leaning': emoji = '🔴'; break;
+    case 'Balanced': emoji = '🟡'; break;
+  }
+  let bar = '██';
+  switch(s.signal_strength) {
+    case 'Strong': bar = '████'; break;
+    case 'Moderate': bar = '███'; break;
+    case 'Weak': bar = '██'; break;
+  }
+  let cls = 'neutral';
+  if (s.directional_bias === 'Bullish-leaning') cls = 'bullish';
+  else if (s.directional_bias === 'Bearish-leaning') cls = 'bearish';
+
+  return '<div class="signal-card ' + cls + '">' +
+    '---\n' +
+    '📊 **Signal Card**\n' +
+    emoji + ' **' + escapeHtml(s.directional_bias) + '** &nbsp;|&nbsp; Confidence: **' + s.confidence_score + '/100** &nbsp;|&nbsp; ' + bar + '\n' +
+    '⚠️ Not trading advice. Directional signal only.' +
+    '</div>';
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Simple markdown renderer
+function renderMarkdown(text) {
+  let html = escapeHtml(text);
+  // Bold: **text**
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  // Italic: *text*
+  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  // Inline code: `text`
+  html = html.replace(/`(.+?)`/g, '<code style="background:#1a1d27;padding:1px 5px;border-radius:3px;font-size:13px;">$1</code>');
+  // Newlines
+  html = html.replace(/\n/g, '<br>');
+  // Horizontal rule: ---
+  html = html.replace(/---/g, '<hr style="border:none;border-top:1px solid var(--border);margin:8px 0">');
+  // Headers: ## text
+  html = html.replace(/^## (.+)$/gm, '<h3 style="font-size:15px;color:#fff;margin:8px 0 4px;">$1</h3>');
+  return html;
+}
+
+// ── Toast ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>
