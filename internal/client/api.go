@@ -75,6 +75,21 @@ type NewsResponse struct {
 	} `json:"articles"`
 }
 
+// ── Helpers ──
+
+type errDetail struct {
+	Detail string `json:"detail"`
+}
+
+func readError(resp *http.Response) string {
+	var e errDetail
+	json.NewDecoder(resp.Body).Decode(&e)
+	if e.Detail != "" {
+		return e.Detail
+	}
+	return fmt.Sprintf("API error %d", resp.StatusCode)
+}
+
 // ── API methods ──
 
 func (c *Client) Chat(message, session string, deep bool) (*ChatResponse, error) {
@@ -100,18 +115,8 @@ func (c *Client) Chat(message, session string, deep bool) (*ChatResponse, error)
 	if resp.StatusCode == 401 {
 		return nil, fmt.Errorf("invalid API key — run: stxai setup")
 	}
-	if resp.StatusCode == 400 {
-		var errResp struct {
-			Detail string `json:"detail"`
-		}
-		json.NewDecoder(resp.Body).Decode(&errResp)
-		if errResp.Detail != "" {
-			return nil, fmt.Errorf("%s", errResp.Detail)
-		}
-		return nil, fmt.Errorf("bad request")
-	}
 	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("API error %d", resp.StatusCode)
+		return nil, fmt.Errorf("%s", readError(resp))
 	}
 
 	var cr ChatResponse
@@ -170,10 +175,7 @@ func (c *Client) Analyze(ticker string) (*AnalyzeResponse, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		if resp.StatusCode == 401 {
-			return nil, fmt.Errorf("invalid API key — run: stxai setup")
-		}
-		return nil, fmt.Errorf("API error %d", resp.StatusCode)
+		return nil, fmt.Errorf("%s", readError(resp))
 	}
 
 	var ar AnalyzeResponse
@@ -200,11 +202,8 @@ func (c *Client) Scan(market, criteria string) (*ChatResponse, error) {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode == 403 {
-		return nil, fmt.Errorf("upgrade to Pro for market scanning — https://stxai.app")
-	}
 	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("API error %d", resp.StatusCode)
+		return nil, fmt.Errorf("%s", readError(resp))
 	}
 
 	// Scan returns {results, market}, we wrap results in ChatResponse-like format
@@ -231,11 +230,8 @@ func (c *Client) News(ticker string) (*NewsResponse, error) {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode == 403 {
-		return nil, fmt.Errorf("upgrade to Pro for news analysis — https://stxai.app")
-	}
 	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("API error %d", resp.StatusCode)
+		return nil, fmt.Errorf("%s", readError(resp))
 	}
 
 	var nr NewsResponse
