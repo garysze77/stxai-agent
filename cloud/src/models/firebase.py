@@ -80,8 +80,10 @@ async def increment_usage(api_key: str, user_id: str) -> int:
     return new_count
 
 
-async def get_user_by_stripe_customer(stripe_customer_id: str) -> dict | None:
+def get_user_by_stripe_customer(stripe_customer_id: str) -> dict | None:
     """Find a user by their Stripe customer ID."""
+    if not stripe_customer_id:
+        return None
     db = get_db()
     docs = (
         db.collection("users")
@@ -94,8 +96,10 @@ async def get_user_by_stripe_customer(stripe_customer_id: str) -> dict | None:
     return None
 
 
-async def get_user_by_stripe_subscription(subscription_id: str) -> dict | None:
+def get_user_by_stripe_subscription(subscription_id: str) -> dict | None:
     """Find a user by their Stripe subscription ID."""
+    if not subscription_id:
+        return None
     db = get_db()
     docs = (
         db.collection("users")
