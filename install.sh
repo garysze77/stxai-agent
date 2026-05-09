@@ -25,22 +25,26 @@ case "$OS" in
     *) echo "Unsupported OS: $OS. Try Windows binary from GitHub Releases."; exit 1 ;;
 esac
 
-TARGET="${BINARY}-${OS}-${ARCH}"
-URL="https://github.com/${REPO}/releases/${VERSION}/download/${TARGET}"
+TARBALL="${BINARY}_${OS}_${ARCH}.tar.gz"
+URL="https://github.com/${REPO}/releases/${VERSION}/download/${TARBALL}"
 
 if [ "$VERSION" = "latest" ]; then
-    URL="https://github.com/${REPO}/releases/latest/download/${TARGET}"
+    URL="https://github.com/${REPO}/releases/latest/download/${TARBALL}"
 fi
 
-echo "→ Downloading ${TARGET}..."
+echo "→ Downloading ${TARBALL}..."
 if command -v curl >/dev/null 2>&1; then
-    curl -fsSL "$URL" -o "/tmp/${BINARY}"
+    curl -fsSL "$URL" -o "/tmp/${TARBALL}"
 elif command -v wget >/dev/null 2>&1; then
-    wget -q "$URL" -O "/tmp/${BINARY}"
+    wget -q "$URL" -O "/tmp/${TARBALL}"
 else
     echo "Please install curl or wget."
     exit 1
 fi
+
+echo "→ Extracting ${TARBALL}..."
+tar -xzf "/tmp/${TARBALL}" -C /tmp
+rm "/tmp/${TARBALL}"
 
 echo "→ Installing to /usr/local/bin/${BINARY}..."
 chmod +x "/tmp/${BINARY}"
