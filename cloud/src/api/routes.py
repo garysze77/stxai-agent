@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Request
 from langchain_core.messages import HumanMessage, AIMessage
+import logging
 
 from api.schemas import (
     ChatRequest, ChatResponse, AnalyzeResponse, SignalData, QuotaInfo,
@@ -14,6 +15,7 @@ from memory.store import (
 )
 from tools.market_data import get_stock_price as _fetch_price
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1")
 
 
@@ -59,6 +61,48 @@ def _get_quota(request: Request) -> QuotaInfo | None:
 @router.get("/health")
 async def health():
     return {"status": "ok", "service": "stxai-cloud"}
+
+
+@router.get("/health/llm")
+async def health_llm():
+    """Check LLM connectivity by testing Puter and MiniMax."""
+    from llm.router import _puter_client, _minimax_client
+    from langchain_core.messages import HumanMessage
+
+    result = {"status": "ok", "providers": {}}
+
+    # Test Puter
+    try:
+        llm = _puter_client()
+        resp = await llm.ainvoke([HumanMessage(content="ping")])
+        result["providers"]["puter"] = {
+            "status": "ok",
+            "model": resp.response_metadata.get("model_name", "unknown"),
+        }
+    except Exception as e:
+        result["providers"]["puter"] = {"status": "error", "detail": str(e)[:200]}
+        result["status"] = "degraded"
+
+    # Test MiniMax
+    mm = _minimax_client()
+    if mm:
+        try:
+            resp = await mm.ainvoke([HumanMessage(content="ping")])
+            result["providers"]["minimax"] = {
+                "status": "ok",
+                "model": resp.response_metadata.get("model_name", "unknown"),
+            }
+        except Exception as e:
+            result["providers"]["minimax"] = {"status": "error", "detail": str(e)[:200]}
+            if result["status"] == "ok":
+                result["status"] = "degraded"
+    else:
+        result["providers"]["minimax"] = {"status": "not_configured"}
+
+    if all(p.get("status") == "error" for p in result["providers"].values()):
+        result["status"] = "down"
+
+    return result
 
 
 @router.post("/chat", response_model=ChatResponse)
@@ -118,7 +162,12 @@ async def analyze(ticker: str, request: Request, user: dict = Depends(verify_api
         subscription_tier=user.get("subscription_tier", "free"),
         ticker=ticker,
     )
-    result = await deep_agent.ainvoke(state)
+    try:
+        result = await deep_agent.ainvoke(state)
+    except Exception as e:
+        logger.error(f"Agent failed for {ticker}: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Agent error: {e}")
+
     summary = _extract_reply(result)
 
     # Cache the result for future requests
