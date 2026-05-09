@@ -95,11 +95,26 @@ def reset_usage():
     print(f"  Deleted {count} usage records.")
 
 
+def set_tier(tier: str):
+    """Upgrade/downgrade the test user's subscription tier."""
+    valid = {"free", "pro", "premium"}
+    if tier not in valid:
+        print(f"❌ Invalid tier: {tier}. Must be one of: {', '.join(valid)}")
+        return
+    db.collection("users").document(TEST_USER).update({"subscription_tier": tier})
+    # Update the key name to match
+    db.collection("api_keys").document(TEST_KEY).update({"name": f"{tier.title()} Test Key"})
+    print(f"✅ {TEST_USER} tier → {tier}")
+    show_all()
+
+
 if __name__ == "__main__":
     import argparse
     p = argparse.ArgumentParser(description="Inspect/clean Firestore test data")
     p.add_argument("action", nargs="?", default="show",
-                   choices=["show", "clean-keys", "reset-usage", "clean-all"])
+                   choices=["show", "clean-keys", "reset-usage", "clean-all", "set-tier"])
+    p.add_argument("--tier", default="premium", choices=["free", "pro", "premium"],
+                   help="Tier for set-tier action (default: premium)")
     args = p.parse_args()
 
     if args.action == "show":
@@ -116,3 +131,5 @@ if __name__ == "__main__":
         print("\nResetting usage...")
         reset_usage()
         print("\n✅ Cleanup complete. Test key stx-test-key-001 preserved.")
+    elif args.action == "set-tier":
+        set_tier(args.tier)

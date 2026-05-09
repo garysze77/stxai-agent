@@ -18,7 +18,7 @@ def seed():
         "email": "test@stxai.io",
         "name": "Test User",
         "created_at": firestore.SERVER_TIMESTAMP,
-        "subscription_tier": "pro",
+        "subscription_tier": "premium",
         "subscription_expiry": None,
         "stripe_customer_id": None,
     })
