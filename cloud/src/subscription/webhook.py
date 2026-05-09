@@ -298,6 +298,7 @@ async def process_webhook(payload: bytes, signature: str) -> dict:
     handlers = {
         "checkout.session.completed": lambda: handle_checkout_completed(event_obj),
         "invoice.payment_succeeded": lambda: handle_invoice_payment_succeeded(event_obj),
+        "invoice.paid": lambda: handle_invoice_payment_succeeded(event_obj),
         "customer.subscription.updated": lambda: handle_subscription_updated(event_obj),
         "customer.subscription.deleted": lambda: handle_subscription_deleted(event_obj),
         "invoice.payment_failed": lambda: handle_invoice_payment_failed(event_obj),
