@@ -1,9 +1,9 @@
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from langchain_core.messages import HumanMessage, AIMessage
 
 from api.schemas import (
-    ChatRequest, ChatResponse, AnalyzeResponse, SignalData,
+    ChatRequest, ChatResponse, AnalyzeResponse, SignalData, QuotaInfo,
     ScanRequest, NewsResponse, MarketSummaryResponse,
 )
 from api.middleware import verify_api_key, validate_stock_query
@@ -47,13 +47,22 @@ def _extract_signal(result: dict) -> SignalData | None:
     )
 
 
+def _get_quota(request: Request) -> QuotaInfo | None:
+    """Extract quota info from request state (set by verify_api_key middleware)."""
+    limit = getattr(request.state, "quota_limit", None)
+    remaining = getattr(request.state, "quota_remaining", None)
+    if limit is not None and remaining is not None:
+        return QuotaInfo(limit=limit, remaining=remaining)
+    return None
+
+
 @router.get("/health")
 async def health():
     return {"status": "ok", "service": "stxai-cloud"}
 
 
 @router.post("/chat", response_model=ChatResponse)
-async def chat(body: ChatRequest, user: dict = Depends(verify_api_key)):
+async def chat(body: ChatRequest, request: Request, user: dict = Depends(verify_api_key)):
     # Reject non-stock queries
     validate_stock_query(body.message)
 
@@ -79,11 +88,12 @@ async def chat(body: ChatRequest, user: dict = Depends(verify_api_key)):
         reply=_extract_reply(result),
         session_id=body.session_id or "default",
         signal=_extract_signal(result),
+        quota=_get_quota(request),
     )
 
 
 @router.get("/analyze/{ticker}", response_model=AnalyzeResponse)
-async def analyze(ticker: str, user: dict = Depends(verify_api_key)):
+async def analyze(ticker: str, request: Request, user: dict = Depends(verify_api_key)):
     ticker = ticker.upper()
 
     # ── Cache check ──
@@ -98,6 +108,7 @@ async def analyze(ticker: str, user: dict = Depends(verify_api_key)):
             name=ticker,
             price=new_price,
             summary=note + cached["final_report"],
+            quota=_get_quota(request),
         )
 
     # ── Cache miss: run full multi-agent debate ──
@@ -122,6 +133,7 @@ async def analyze(ticker: str, user: dict = Depends(verify_api_key)):
         price=price,
         summary=summary,
         signal=_extract_signal(result),
+        quota=_get_quota(request),
     )
 
 

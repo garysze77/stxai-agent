@@ -106,6 +106,11 @@ async def verify_api_key(request: Request) -> dict:
     # Check usage quota
     today_count = await increment_usage(api_key, user["id"])
     quota = await get_user_quota(user["id"])
+    remaining = max(0, quota - today_count)
+
+    # Attach quota info to request state so routes can use it
+    request.state.quota_limit = quota
+    request.state.quota_remaining = remaining
 
     if today_count > quota:
         raise HTTPException(status_code=429, detail="Daily quota exceeded")

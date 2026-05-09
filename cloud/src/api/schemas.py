@@ -15,11 +15,16 @@ class SignalData(BaseModel):
     signal_strength: str = ""
 
 
+class QuotaInfo(BaseModel):
+    limit: int = 0
+    remaining: int = 0
+
 class ChatResponse(BaseModel):
     reply: str
     session_id: str
     tokens_used: int | None = None
     signal: SignalData | None = None
+    quota: QuotaInfo | None = None
 
 
 class AnalyzeRequest(BaseModel):
@@ -34,6 +39,7 @@ class AnalyzeResponse(BaseModel):
     summary: str
     technical_signals: dict | None = None
     signal: SignalData | None = None
+    quota: QuotaInfo | None = None
 
 
 class ScanRequest(BaseModel):
