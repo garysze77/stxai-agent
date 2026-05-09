@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -74,9 +75,9 @@ func (m *darwinManager) Install(binaryPath, _ string) error {
 	}
 
 	// Load
-	cmd := exec.Command("launchctl", "bootout", "gui/"+os.Getenv("UID"), plistPath())
+	cmd := exec.Command("launchctl", "bootout", "gui/"+strconv.Itoa(os.Getuid()), plistPath())
 	cmd.Run() // ignore errors (may not exist)
-	cmd = exec.Command("launchctl", "bootstrap", "gui/"+os.Getenv("UID"), plistPath())
+	cmd = exec.Command("launchctl", "bootstrap", "gui/"+strconv.Itoa(os.Getuid()), plistPath())
 	if out, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("launchctl bootstrap: %s — %w", strings.TrimSpace(string(out)), err)
 	}
@@ -84,7 +85,7 @@ func (m *darwinManager) Install(binaryPath, _ string) error {
 }
 
 func (m *darwinManager) Uninstall() error {
-	cmd := exec.Command("launchctl", "bootout", "gui/"+os.Getenv("UID"), plistPath())
+	cmd := exec.Command("launchctl", "bootout", "gui/"+strconv.Itoa(os.Getuid()), plistPath())
 	cmd.Run() // ignore errors
 	os.Remove(plistPath())
 	return nil
@@ -95,7 +96,7 @@ func (m *darwinManager) Status() (*Status, error) {
 	if _, err := os.Stat(plistPath()); err == nil {
 		s.Installed = true
 	}
-	cmd := exec.Command("launchctl", "print", "gui/"+os.Getenv("UID")+"/"+ServiceName)
+	cmd := exec.Command("launchctl", "print", "gui/"+strconv.Itoa(os.Getuid())+"/"+ServiceName)
 	out, _ := cmd.CombinedOutput()
 	s.Running = strings.Contains(string(out), "state = running")
 	return s, nil
