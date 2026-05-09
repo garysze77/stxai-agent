@@ -44,7 +44,7 @@ fi
 
 echo "→ Extracting ${TARBALL}..."
 TMPDIR="$(mktemp -d)"
-tar -xzf "/tmp/${TARBALL}" -C "$TMPDIR"
+tar -xzf "/tmp/${TARBALL}" -C "$TMPDIR" --exclude='.'
 rm "/tmp/${TARBALL}"
 
 echo "→ Installing to /usr/local/bin/${BINARY}..."
