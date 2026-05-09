@@ -92,18 +92,22 @@ def save_analysis(
 def get_past_analyses(user_id: str, ticker: str, limit: int = MAX_HISTORY) -> list[dict]:
     """Retrieve past analyses for the same ticker, most recent first."""
     db = get_db()
-    docs = (
-        db.collection(COLLECTION)
-        .where("user_id", "==", user_id)
-        .where("ticker", "==", ticker.upper())
-        .order_by("created_at", direction="DESCENDING")
-        .limit(limit)
-        .stream()
-    )
-    results = []
-    for doc in docs:
-        results.append(doc.to_dict())
-    return results
+    try:
+        docs = (
+            db.collection(COLLECTION)
+            .where("user_id", "==", user_id)
+            .where("ticker", "==", ticker.upper())
+            .order_by("created_at", direction="DESCENDING")
+            .limit(limit)
+            .stream()
+        )
+        results = []
+        for doc in docs:
+            results.append(doc.to_dict())
+        return results
+    except Exception as e:
+        logger.warning(f"Failed to query past analyses (index may be missing): {e}")
+        return []
 
 
 def build_memory_context(past_analyses: list[dict]) -> str:
