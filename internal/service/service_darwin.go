@@ -73,16 +73,18 @@ func (m *darwinManager) Install(binaryPath, _ string) error {
 		return fmt.Errorf("write plist: %w", err)
 	}
 
-	// Unload any existing instance, then load
+	// Unload any existing instance, then load and start
 	exec.Command("launchctl", "unload", plistPath()).Run()
 	cmd := exec.Command("launchctl", "load", plistPath())
 	if out, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("launchctl load: %s — %w", strings.TrimSpace(string(out)), err)
 	}
+	exec.Command("launchctl", "start", ServiceName).Run()
 	return nil
 }
 
 func (m *darwinManager) Uninstall() error {
+	exec.Command("launchctl", "stop", ServiceName).Run()
 	exec.Command("launchctl", "unload", plistPath()).Run()
 	os.Remove(plistPath())
 	return nil
