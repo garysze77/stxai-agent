@@ -21,7 +21,7 @@ make build
 ## Quick Start
 
 ```bash
-# 1. Configure — enter your API key from https://stxai.vercel.app/dashboard
+# 1. Configure — enter your API key from https://stxai.app/dashboard
 stxai setup
 
 # 2. Start chatting
@@ -66,4 +66,4 @@ make install      # Install to /usr/local/bin
 ## Requirements
 
 - Go 1.22+ (build from source only)
-- STX AI Cloud API key (subscribe at https://stxai.vercel.app)
+- STX AI Cloud API key (subscribe at https://stxai.app)

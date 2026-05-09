@@ -16,7 +16,7 @@ func SetupCmd() *cobra.Command {
 		Use:   "setup",
 		Short: "Configure STX AI Agent with API key and settings",
 		Long: `Setup guides you through configuring your STX AI Agent.
-You'll need an API key from https://stxai.vercel.app/dashboard`,
+You'll need an API key from https://stxai.app/dashboard`,
 		RunE: runSetup,
 	}
 }
@@ -37,7 +37,7 @@ func runSetup(_ *cobra.Command, _ []string) error {
 	fmt.Println("║     STX AI Agent Setup           ║")
 	fmt.Println("╚══════════════════════════════════╝")
 	fmt.Println()
-	fmt.Println("Get your API key at: https://stxai.vercel.app/dashboard")
+	fmt.Println("Get your API key at: https://stxai.app/dashboard")
 	fmt.Println()
 
 	// API Key

@@ -95,7 +95,7 @@ func (c *Client) Chat(message, session string, deep bool) (*ChatResponse, error)
 	defer resp.Body.Close()
 
 	if resp.StatusCode == 429 {
-		return nil, fmt.Errorf("daily quota exceeded — upgrade at https://stxai.vercel.app")
+		return nil, fmt.Errorf("daily quota exceeded — upgrade at https://stxai.app")
 	}
 	if resp.StatusCode == 401 {
 		return nil, fmt.Errorf("invalid API key — run: stxai setup")
@@ -201,7 +201,7 @@ func (c *Client) Scan(market, criteria string) (*ChatResponse, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode == 403 {
-		return nil, fmt.Errorf("upgrade to Pro for market scanning — https://stxai.vercel.app")
+		return nil, fmt.Errorf("upgrade to Pro for market scanning — https://stxai.app")
 	}
 	if resp.StatusCode != 200 {
 		return nil, fmt.Errorf("API error %d", resp.StatusCode)
@@ -232,7 +232,7 @@ func (c *Client) News(ticker string) (*NewsResponse, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode == 403 {
-		return nil, fmt.Errorf("upgrade to Pro for news analysis — https://stxai.vercel.app")
+		return nil, fmt.Errorf("upgrade to Pro for news analysis — https://stxai.app")
 	}
 	if resp.StatusCode != 200 {
 		return nil, fmt.Errorf("API error %d", resp.StatusCode)

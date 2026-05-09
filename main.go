@@ -18,7 +18,7 @@ var rootCmd = &cobra.Command{
 	Long: `STX AI is an open-source autonomous AI agent for US & HK stock analysis.
 
 Self-hosted client that connects to the STX AI Cloud API.
-Subscribe at https://stxai.vercel.app to get your API key.`,
+Subscribe at https://stxai.app to get your API key.`,
 	Run: func(c *cobra.Command, args []string) {
 		c.Help()
 	},
