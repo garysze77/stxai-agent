@@ -24,7 +24,7 @@ from memory.store import (
 )
 
 logger = logging.getLogger(__name__)
-MAX_TOOL_ITERATIONS = 5
+MAX_TOOL_ITERATIONS = 3
 
 
 async def _run_tool_loop(messages: list, tools: list, router: LLMRouter):
