@@ -43,12 +43,14 @@ else
 fi
 
 echo "→ Extracting ${TARBALL}..."
-tar -xzf "/tmp/${TARBALL}" -C /tmp
+TMPDIR="$(mktemp -d)"
+tar -xzf "/tmp/${TARBALL}" -C "$TMPDIR"
 rm "/tmp/${TARBALL}"
 
 echo "→ Installing to /usr/local/bin/${BINARY}..."
-chmod +x "/tmp/${BINARY}"
-sudo mv "/tmp/${BINARY}" /usr/local/bin/${BINARY}
+chmod +x "${TMPDIR}/${BINARY}"
+sudo mv "${TMPDIR}/${BINARY}" /usr/local/bin/${BINARY}
+rm -rf "$TMPDIR"
 
 echo ""
 echo "✅ STX AI Agent installed!"
