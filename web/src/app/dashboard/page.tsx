@@ -4,6 +4,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { subscribe, getApiKeys } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 export default function DashboardPage() {
   const { user, loading, signOut } = useAuth();
@@ -64,7 +65,10 @@ export default function DashboardPage() {
       {/* Dashboard Nav */}
       <header className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
         <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4">
-          <span className="text-lg font-bold tracking-tight">STX AI</span>
+          <span className="flex items-center gap-2">
+            <Image src="/stxai-logo.png" alt="STX AI" width={32} height={32} className="rounded" />
+            <span className="text-lg font-bold tracking-tight">STX AI</span>
+          </span>
           <div className="flex items-center gap-4 text-sm">
             <span className="text-zinc-600 dark:text-zinc-400">
               {user.email}

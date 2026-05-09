@@ -17,6 +17,9 @@ export const metadata: Metadata = {
   title: "STX AI — Autonomous Financial AI Agent",
   description:
     "Open-source AI agent for US & HK stock analysis. Self-install, subscribe for API access. Real-time market data, technical analysis, and AI-powered insights.",
+  icons: {
+    icon: "/favicon.png",
+  },
   other: {
     "google-adsense-account": "ca-pub-9811241980847307",
   },

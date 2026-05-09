@@ -2,6 +2,7 @@
 
 import { useAuth } from "@/components/AuthProvider";
 import Link from "next/link";
+import Image from "next/image";
 
 const FEATURES = [
   {
@@ -89,8 +90,9 @@ export default function LandingPage() {
       {/* Nav */}
       <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white/80 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/80">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-          <Link href="/" className="text-lg font-bold tracking-tight">
-            STX AI
+          <Link href="/" className="flex items-center gap-2">
+            <Image src="/stxai-logo.png" alt="STX AI" width={32} height={32} className="rounded" />
+            <span className="text-lg font-bold tracking-tight">STX AI</span>
           </Link>
           <nav className="flex items-center gap-4 text-sm font-medium">
             <a href="#features" className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100">

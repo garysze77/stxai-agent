@@ -3,6 +3,7 @@
 import { useAuth } from "@/components/AuthProvider";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
+import Image from "next/image";
 
 export default function LoginPage() {
   const { user, loading, signInWithGoogle, signInWithEmail, signUpWithEmail } =
@@ -74,7 +75,10 @@ export default function LoginPage() {
   return (
     <div className="flex flex-1 items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        <h1 className="text-center text-2xl font-bold tracking-tight">
+        <div className="flex justify-center">
+          <Image src="/stxai-logo.png" alt="STX AI" width={48} height={48} className="rounded" />
+        </div>
+        <h1 className="text-center text-2xl font-bold tracking-tight mt-3">
           STX AI
         </h1>
 
