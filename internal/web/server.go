@@ -70,7 +70,7 @@ func (s *Server) Start() error {
 		Addr:         ":" + s.port,
 		Handler:      withCORS(mux),
 		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 130 * time.Second, // longer than client timeout
+		WriteTimeout: 310 * time.Second, // longer than client timeout
 		IdleTimeout:  60 * time.Second,
 	}
 
