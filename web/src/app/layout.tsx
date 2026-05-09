@@ -18,6 +18,9 @@ export const metadata: Metadata = {
   title: "STX AI — Autonomous Financial AI Agent",
   description:
     "Open-source AI agent for US & HK stock analysis. Self-install, subscribe for API access. Real-time market data, technical analysis, and AI-powered insights.",
+  other: {
+    "google-adsense-account": "ca-pub-9811241980847307",
+  },
 };
 
 export default function RootLayout({
@@ -30,15 +33,13 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <head>
+      <body className="min-h-full flex flex-col">
         <Script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9811241980847307"
           crossOrigin="anonymous"
           strategy="afterInteractive"
         />
-      </head>
-      <body className="min-h-full flex flex-col">
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
