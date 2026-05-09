@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 type Store struct {
@@ -31,7 +31,7 @@ func Open() (*Store, error) {
 		return nil, err
 	}
 
-	db, err := sql.Open("sqlite3", filepath.Join(dir, "stxai.db"))
+	db, err := sql.Open("sqlite", filepath.Join(dir, "stxai.db"))
 	if err != nil {
 		return nil, err
 	}
