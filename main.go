@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var version = "dev"
+var version = "0.2.0"
 
 var rootCmd = &cobra.Command{
 	Use:     "stxai",
@@ -28,6 +28,7 @@ func init() {
 	rootCmd.AddCommand(cmd.SetupCmd())
 	rootCmd.AddCommand(cmd.StartCmd())
 	rootCmd.AddCommand(cmd.ChatCmd())
+	rootCmd.AddCommand(cmd.AnalyzeCmd())
 	rootCmd.AddCommand(cmd.ServiceCmd())
 	rootCmd.AddCommand(cmd.UpdateCmd())
 }
