@@ -9,21 +9,10 @@ import (
 	"time"
 
 	"github.com/garysze77/stxai-agent/internal/client"
+	"github.com/garysze77/stxai-agent/internal/i18n"
 	"github.com/garysze77/stxai-agent/internal/store"
 
 	tele "gopkg.in/telebot.v3"
-)
-
-// Keyboard button labels (also used as callback text)
-const (
-	btnAnalyze  = "📈 Analyze"
-	btnSignal   = "⚡ Signal"
-	btnNews     = "📰 News"
-	btnScanUS   = "📊 US Scan"
-	btnScanHK   = "🇭🇰 HK Scan"
-	btnClear    = "🗑 Clear"
-	btnHelp     = "ℹ️ Help"
-	btnCancel   = "❌ Cancel"
 )
 
 // Mode states for keyboard flow
@@ -38,13 +27,16 @@ type Bot struct {
 	tg     *tele.Bot
 	client *client.Client
 	store  *store.Store
+	lang   string
 
-	// Track which mode each user is in (userID → mode)
 	mu    sync.Mutex
 	modes map[int64]string
 }
 
-func New(token string, c *client.Client, s *store.Store) (*Bot, error) {
+func New(token string, c *client.Client, s *store.Store, lang string) (*Bot, error) {
+	if lang == "" {
+		lang = "en"
+	}
 	pref := tele.Settings{
 		Token:  token,
 		Poller: &tele.LongPoller{Timeout: 10 * time.Second},
@@ -52,16 +44,27 @@ func New(token string, c *client.Client, s *store.Store) (*Bot, error) {
 
 	tg, err := tele.NewBot(pref)
 	if err != nil {
-		return nil, fmt.Errorf("telegram bot init: %w", err)
+		return nil, fmt.Errorf("%s", i18n.T("bot.bot_init_failed", lang, err))
 	}
 
 	return &Bot{
 		tg:     tg,
 		client: c,
 		store:  s,
+		lang:   lang,
 		modes:  make(map[int64]string),
 	}, nil
 }
+
+// Button helpers
+func (b *Bot) btnAnalyze() string   { return i18n.T("bot.btn_analyze", b.lang) }
+func (b *Bot) btnSignal() string    { return i18n.T("bot.btn_signal", b.lang) }
+func (b *Bot) btnNews() string      { return i18n.T("bot.btn_news", b.lang) }
+func (b *Bot) btnScanUS() string    { return i18n.T("bot.btn_scan_us", b.lang) }
+func (b *Bot) btnScanHK() string    { return i18n.T("bot.btn_scan_hk", b.lang) }
+func (b *Bot) btnClear() string     { return i18n.T("bot.btn_clear", b.lang) }
+func (b *Bot) btnHelp() string      { return i18n.T("bot.btn_help", b.lang) }
+func (b *Bot) btnCancel() string    { return i18n.T("bot.btn_cancel", b.lang) }
 
 // ── Mode management ──
 
@@ -83,20 +86,20 @@ func (b *Bot) getMode(userID int64) string {
 
 // ── Keyboard ──
 
-func mainKeyboard() *tele.ReplyMarkup {
+func (b *Bot) mainKeyboard() *tele.ReplyMarkup {
 	m := &tele.ReplyMarkup{ResizeKeyboard: true}
 	m.ReplyKeyboard = [][]tele.ReplyButton{
-		{{Text: btnAnalyze}, {Text: btnSignal}, {Text: btnNews}},
-		{{Text: btnScanUS}, {Text: btnScanHK}},
-		{{Text: btnClear}, {Text: btnHelp}},
+		{{Text: b.btnAnalyze()}, {Text: b.btnSignal()}, {Text: b.btnNews()}},
+		{{Text: b.btnScanUS()}, {Text: b.btnScanHK()}},
+		{{Text: b.btnClear()}, {Text: b.btnHelp()}},
 	}
 	return m
 }
 
-func cancelKeyboard() *tele.ReplyMarkup {
+func (b *Bot) cancelKeyboard() *tele.ReplyMarkup {
 	m := &tele.ReplyMarkup{ResizeKeyboard: true}
 	m.ReplyKeyboard = [][]tele.ReplyButton{
-		{{Text: btnCancel}},
+		{{Text: b.btnCancel()}},
 	}
 	return m
 }
@@ -106,7 +109,7 @@ func cancelKeyboard() *tele.ReplyMarkup {
 func (b *Bot) Start(ctx context.Context) error {
 	b.registerHandlers()
 	b.setCommands()
-	log.Printf("🤖 STX AI Bot starting... t.me/%s", b.tg.Me.Username)
+	log.Printf("%s", i18n.T("bot.starting", b.lang, b.tg.Me.Username))
 	b.tg.Start()
 	<-ctx.Done()
 	b.tg.Stop()
@@ -115,15 +118,15 @@ func (b *Bot) Start(ctx context.Context) error {
 
 func (b *Bot) setCommands() {
 	cmds := []tele.Command{
-		{Text: "analyze", Description: "Deep multi-agent stock analysis"},
-		{Text: "scan", Description: "Scan market for top movers"},
-		{Text: "news", Description: "Latest news for a stock"},
-		{Text: "signal", Description: "Trading signal without deep re-analysis"},
-		{Text: "clear", Description: "Clear conversation history"},
-		{Text: "help", Description: "Show usage guide"},
+		{Text: "analyze", Description: i18n.T("bot.cmd_analyze_desc", b.lang)},
+		{Text: "scan", Description: i18n.T("bot.cmd_scan_desc", b.lang)},
+		{Text: "news", Description: i18n.T("bot.cmd_news_desc", b.lang)},
+		{Text: "signal", Description: i18n.T("bot.cmd_signal_desc", b.lang)},
+		{Text: "clear", Description: i18n.T("bot.cmd_clear_desc", b.lang)},
+		{Text: "help", Description: i18n.T("bot.cmd_help_desc", b.lang)},
 	}
 	if err := b.tg.SetCommands(cmds); err != nil {
-		log.Printf("⚠️ setCommands failed: %v", err)
+		log.Printf("%s", i18n.T("bot.set_commands_failed", b.lang, err))
 	}
 }
 
@@ -142,41 +145,24 @@ func (b *Bot) registerHandlers() {
 
 func (b *Bot) handleStart(c tele.Context) error {
 	b.setMode(c.Sender().ID, modeNone)
-
-	msg := "🚀 *STX AI Agent* — Autonomous Financial AI\n\n" +
-		"Tap a button below or type a stock\\-related question\\!\n" +
-		"Supports US \\(NYSE, NASDAQ\\) \\& Hong Kong \\(HKEX\\) stocks\\."
-
-	return c.Send(msg, &tele.SendOptions{
-		ParseMode: tele.ModeMarkdownV2,
-		ReplyMarkup: mainKeyboard(),
+	return c.Send(i18n.T("bot.welcome", b.lang), &tele.SendOptions{
+		ParseMode:   tele.ModeMarkdownV2,
+		ReplyMarkup: b.mainKeyboard(),
 	})
 }
 
 func (b *Bot) handleHelp(c tele.Context) error {
 	b.setMode(c.Sender().ID, modeNone)
-
-	msg := "📖 *STX AI Usage*\n\n" +
-		"• Type a ticker: `AAPL`, `$TSLA`, `0700\\.HK`\n" +
-		"• Ask for analysis: `NVDA technicals?`\n" +
-		"• Use the keyboard below for quick actions\n\n" +
-		"*Buttons:*\n" +
-		"📈 Analyze — Deep multi\\-agent report\n" +
-		"⚡ Signal — Quick trading signal\n" +
-		"📰 News — Latest headlines\n" +
-		"📊 US/HK Scan — Market movers\n\n" +
-		"Supports US & Hong Kong stocks\\."
-
-	return c.Send(msg, &tele.SendOptions{
+	return c.Send(i18n.T("bot.help_msg", b.lang), &tele.SendOptions{
 		ParseMode:   tele.ModeMarkdownV2,
-		ReplyMarkup: mainKeyboard(),
+		ReplyMarkup: b.mainKeyboard(),
 	})
 }
 
 func (b *Bot) handleAnalyze(c tele.Context) error {
 	ticker := strings.TrimSpace(c.Message().Payload)
 	if ticker == "" {
-		return b.promptTicker(c, modeAnalyze, "🔬 *Deep Analysis*\n\nEnter a stock code\\(e\\.g\\. AAPL, 0700\\):")
+		return b.promptTicker(c, modeAnalyze, i18n.T("bot.prompt_analyze", b.lang))
 	}
 	return b.runAnalyze(c, ticker)
 }
@@ -184,7 +170,7 @@ func (b *Bot) handleAnalyze(c tele.Context) error {
 func (b *Bot) handleSignal(c tele.Context) error {
 	ticker := strings.TrimSpace(c.Message().Payload)
 	if ticker == "" {
-		return b.promptTicker(c, modeSignal, "⚡ *Quick Signal*\n\nEnter a stock code\\(e\\.g\\. AAPL, 0700\\):")
+		return b.promptTicker(c, modeSignal, i18n.T("bot.prompt_signal", b.lang))
 	}
 	return b.runSignal(c, ticker)
 }
@@ -192,7 +178,7 @@ func (b *Bot) handleSignal(c tele.Context) error {
 func (b *Bot) handleNews(c tele.Context) error {
 	ticker := strings.TrimSpace(c.Message().Payload)
 	if ticker == "" {
-		return b.promptTicker(c, modeNews, "📰 *News*\n\nEnter a stock code\\(e\\.g\\. AAPL, 0700\\):")
+		return b.promptTicker(c, modeNews, i18n.T("bot.prompt_news", b.lang))
 	}
 	return b.runNews(c, ticker)
 }
@@ -203,8 +189,8 @@ func (b *Bot) handleScan(c tele.Context) error {
 		market = "us"
 	}
 	if market != "us" && market != "hk" {
-		return c.Send("Usage: `/scan us` or `/scan hk`",
-			&tele.SendOptions{ParseMode: tele.ModeMarkdownV2, ReplyMarkup: mainKeyboard()})
+		return c.Send(i18n.T("bot.scan_usage", b.lang),
+			&tele.SendOptions{ParseMode: tele.ModeMarkdownV2, ReplyMarkup: b.mainKeyboard()})
 	}
 	return b.runScan(c, market)
 }
@@ -212,9 +198,9 @@ func (b *Bot) handleScan(c tele.Context) error {
 func (b *Bot) handleClear(c tele.Context) error {
 	b.setMode(c.Sender().ID, modeNone)
 	b.store.DeleteOldMessages(time.Now())
-	return c.Send("✅ History cleared\\.", &tele.SendOptions{
+	return c.Send(i18n.T("bot.history_cleared", b.lang), &tele.SendOptions{
 		ParseMode:   tele.ModeMarkdownV2,
-		ReplyMarkup: mainKeyboard(),
+		ReplyMarkup: b.mainKeyboard(),
 	})
 }
 
@@ -226,25 +212,25 @@ func (b *Bot) handleText(c tele.Context) error {
 
 	// 1. Check if it's a keyboard button press
 	switch text {
-	case btnAnalyze:
-		return b.promptTicker(c, modeAnalyze, "🔬 *Deep Analysis*\n\nEnter a stock code\\(e\\.g\\. AAPL, 0700\\):")
-	case btnSignal:
-		return b.promptTicker(c, modeSignal, "⚡ *Quick Signal*\n\nEnter a stock code\\(e\\.g\\. AAPL, 0700\\):")
-	case btnNews:
-		return b.promptTicker(c, modeNews, "📰 *News*\n\nEnter a stock code\\(e\\.g\\. AAPL, 0700\\):")
-	case btnScanUS:
+	case b.btnAnalyze():
+		return b.promptTicker(c, modeAnalyze, i18n.T("bot.prompt_analyze", b.lang))
+	case b.btnSignal():
+		return b.promptTicker(c, modeSignal, i18n.T("bot.prompt_signal", b.lang))
+	case b.btnNews():
+		return b.promptTicker(c, modeNews, i18n.T("bot.prompt_news", b.lang))
+	case b.btnScanUS():
 		return b.runScan(c, "us")
-	case btnScanHK:
+	case b.btnScanHK():
 		return b.runScan(c, "hk")
-	case btnClear:
+	case b.btnClear():
 		return b.handleClear(c)
-	case btnHelp:
+	case b.btnHelp():
 		return b.handleHelp(c)
-	case btnCancel:
+	case b.btnCancel():
 		b.setMode(userID, modeNone)
-		return c.Send("✅ Cancelled\\. Back to normal chat\\.", &tele.SendOptions{
+		return c.Send(i18n.T("bot.cancelled", b.lang), &tele.SendOptions{
 			ParseMode:   tele.ModeMarkdownV2,
-			ReplyMarkup: mainKeyboard(),
+			ReplyMarkup: b.mainKeyboard(),
 		})
 	}
 
@@ -269,7 +255,7 @@ func (b *Bot) promptTicker(c tele.Context, mode, msg string) error {
 	b.setMode(c.Sender().ID, mode)
 	return c.Send(msg, &tele.SendOptions{
 		ParseMode:   tele.ModeMarkdownV2,
-		ReplyMarkup: cancelKeyboard(),
+		ReplyMarkup: b.cancelKeyboard(),
 	})
 }
 
@@ -279,38 +265,38 @@ func (b *Bot) runAnalyze(c tele.Context, ticker string) error {
 	b.setMode(c.Sender().ID, modeNone)
 	ticker = cleanTicker(ticker)
 
-	c.Send("🔬 Running multi\\-agent deep analysis for *"+escapeMD(ticker)+"*\\.\\.\\.",
+	c.Send(i18n.T("bot.running_analysis", b.lang, escapeMD(ticker)),
 		&tele.SendOptions{ParseMode: tele.ModeMarkdownV2})
 	c.Notify(tele.Typing)
 
 	ar, err := b.client.Analyze(ticker)
 	if err != nil {
 		return c.Send("❌ "+escapeMD(err.Error()),
-			&tele.SendOptions{ParseMode: tele.ModeMarkdownV2, ReplyMarkup: mainKeyboard()})
+			&tele.SendOptions{ParseMode: tele.ModeMarkdownV2, ReplyMarkup: b.mainKeyboard()})
 	}
 
 	msg := b.formatAnalyzeResult(ar)
-	return b.sendLongMessage(c, msg, mainKeyboard())
+	return b.sendLongMessage(c, msg, b.mainKeyboard())
 }
 
 func (b *Bot) runSignal(c tele.Context, ticker string) error {
 	b.setMode(c.Sender().ID, modeNone)
 	ticker = cleanTicker(ticker)
 
-	c.Send("⚡ Getting signal for *"+escapeMD(ticker)+"*\\.\\.\\.",
+	c.Send(i18n.T("bot.getting_signal", b.lang, escapeMD(ticker)),
 		&tele.SendOptions{ParseMode: tele.ModeMarkdownV2})
 	c.Notify(tele.Typing)
 
 	ar, err := b.client.Analyze(ticker)
 	if err != nil {
 		return c.Send("❌ "+escapeMD(err.Error()),
-			&tele.SendOptions{ParseMode: tele.ModeMarkdownV2, ReplyMarkup: mainKeyboard()})
+			&tele.SendOptions{ParseMode: tele.ModeMarkdownV2, ReplyMarkup: b.mainKeyboard()})
 	}
 
 	msg := b.formatSignalCard(ar)
 	return c.Send(msg, &tele.SendOptions{
 		ParseMode:   tele.ModeMarkdownV2,
-		ReplyMarkup: mainKeyboard(),
+		ReplyMarkup: b.mainKeyboard(),
 	})
 }
 
@@ -318,25 +304,25 @@ func (b *Bot) runNews(c tele.Context, ticker string) error {
 	b.setMode(c.Sender().ID, modeNone)
 	ticker = cleanTicker(ticker)
 
-	c.Send("📰 Fetching news for *"+escapeMD(ticker)+"*\\.\\.\\.",
+	c.Send(i18n.T("bot.fetching_news", b.lang, escapeMD(ticker)),
 		&tele.SendOptions{ParseMode: tele.ModeMarkdownV2})
 	c.Notify(tele.Typing)
 
 	nr, err := b.client.News(ticker)
 	if err != nil {
 		return c.Send("❌ "+escapeMD(err.Error()),
-			&tele.SendOptions{ParseMode: tele.ModeMarkdownV2, ReplyMarkup: mainKeyboard()})
+			&tele.SendOptions{ParseMode: tele.ModeMarkdownV2, ReplyMarkup: b.mainKeyboard()})
 	}
 
 	if len(nr.Articles) == 0 {
-		return c.Send("📭 No recent news for *"+escapeMD(ticker)+"*", &tele.SendOptions{
+		return c.Send(i18n.T("bot.no_news_for_ticker", b.lang, escapeMD(ticker)), &tele.SendOptions{
 			ParseMode:   tele.ModeMarkdownV2,
-			ReplyMarkup: mainKeyboard(),
+			ReplyMarkup: b.mainKeyboard(),
 		})
 	}
 
 	var lines []string
-	lines = append(lines, "📰 *"+escapeMD(strings.ToUpper(ticker))+" News*")
+	lines = append(lines, i18n.T("bot.news_header", b.lang, escapeMD(strings.ToUpper(ticker))))
 	for i, a := range nr.Articles {
 		if i >= 5 {
 			break
@@ -345,7 +331,7 @@ func (b *Bot) runNews(c tele.Context, ticker string) error {
 	}
 	return c.Send(strings.Join(lines, "\n"), &tele.SendOptions{
 		ParseMode:   tele.ModeMarkdownV2,
-		ReplyMarkup: mainKeyboard(),
+		ReplyMarkup: b.mainKeyboard(),
 	})
 }
 
@@ -356,16 +342,17 @@ func (b *Bot) runScan(c tele.Context, market string) error {
 	if market == "hk" {
 		marketName = "HK"
 	}
-	c.Send("📊 Scanning "+marketName+" market\\.\\.\\.", &tele.SendOptions{ParseMode: tele.ModeMarkdownV2})
+	c.Send(i18n.T("bot.scanning_market", b.lang, marketName),
+		&tele.SendOptions{ParseMode: tele.ModeMarkdownV2})
 	c.Notify(tele.Typing)
 
 	resp, err := b.client.Scan(market, "")
 	if err != nil {
 		return c.Send("❌ "+escapeMD(err.Error()),
-			&tele.SendOptions{ParseMode: tele.ModeMarkdownV2, ReplyMarkup: mainKeyboard()})
+			&tele.SendOptions{ParseMode: tele.ModeMarkdownV2, ReplyMarkup: b.mainKeyboard()})
 	}
 
-	return b.sendLongMessage(c, "📊 *"+marketName+" Market Scan*\n\n"+resp.Reply, mainKeyboard())
+	return b.sendLongMessage(c, i18n.T("bot.market_scan_header", b.lang, marketName)+"\n\n"+resp.Reply, b.mainKeyboard())
 }
 
 func (b *Bot) runChat(c tele.Context, message string) error {
@@ -378,7 +365,7 @@ func (b *Bot) runChat(c tele.Context, message string) error {
 	resp, err := b.client.Chat(message, sessionID, false)
 	if err != nil {
 		return c.Send("❌ "+escapeMD(err.Error()),
-			&tele.SendOptions{ParseMode: tele.ModeMarkdownV2, ReplyMarkup: mainKeyboard()})
+			&tele.SendOptions{ParseMode: tele.ModeMarkdownV2, ReplyMarkup: b.mainKeyboard()})
 	}
 
 	b.store.SaveMessage(sessionID, "assistant", resp.Reply)
@@ -388,14 +375,14 @@ func (b *Bot) runChat(c tele.Context, message string) error {
 		display += b.formatSignalInline(resp.Signal)
 	}
 
-	return b.sendLongMessage(c, display, mainKeyboard())
+	return b.sendLongMessage(c, display, b.mainKeyboard())
 }
 
 // ── Formatting helpers ──
 
 func (b *Bot) formatAnalyzeResult(ar *client.AnalyzeResponse) string {
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("📈 *%s*", escapeMD(ar.Ticker)))
+	sb.WriteString(i18n.T("bot.ticker_analyze_header", b.lang, escapeMD(ar.Ticker)))
 	if ar.Price > 0 {
 		sb.WriteString(fmt.Sprintf("  \\$%.2f", ar.Price))
 	}
@@ -411,16 +398,17 @@ func (b *Bot) formatAnalyzeResult(ar *client.AnalyzeResponse) string {
 
 func (b *Bot) formatSignalCard(ar *client.AnalyzeResponse) string {
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("⚡ *%s Signal*\n\n", escapeMD(ar.Ticker)))
+	sb.WriteString(i18n.T("bot.signal_header", b.lang, escapeMD(ar.Ticker)))
+	sb.WriteString("\n\n")
 
 	if ar.Price > 0 {
-		sb.WriteString(fmt.Sprintf("Price: $%.2f\n", ar.Price))
+		sb.WriteString(fmt.Sprintf(i18n.T("bot.price", b.lang)+": $%.2f\n", ar.Price))
 	}
 
 	if ar.Signal != nil && ar.Signal.ConfidenceScore > 0 {
 		sb.WriteString(b.formatSignalInline(ar.Signal))
 	} else {
-		sb.WriteString("No signal available\\. Run *Analyze* for a full report\\.")
+		sb.WriteString(i18n.T("bot.no_signal_available", b.lang))
 	}
 	return sb.String()
 }
@@ -449,9 +437,9 @@ func (b *Bot) formatSignalInline(s *client.SignalData) string {
 	}
 
 	return fmt.Sprintf(
-		"\\-\\-\\-\n📊 *Signal Card*\n"+
-			"%s *%s*  \\|  Confidence: *%d/100*  \\|  %s\n"+
-			"⚠️ Not trading advice\\. Directional signal only\\.",
+		"\\-\\-\\-\n"+i18n.T("bot.signal_card", b.lang)+"\n"+
+			"%s *%s*  \\|  "+i18n.T("display.confidence", b.lang)+": *%d/100*  \\|  %s\n"+
+			i18n.T("bot.not_advice", b.lang),
 		emoji,
 		escapeMD(s.DirectionalBias),
 		s.ConfidenceScore,
@@ -476,7 +464,6 @@ func (b *Bot) sendLongMessage(c tele.Context, text string, kb *tele.ReplyMarkup)
 		if i == 0 {
 			err = c.Send(text[i:end], opts)
 		} else {
-			// Subsequent chunks: no keyboard to avoid dupes
 			_, err = b.tg.Send(c.Recipient(), text[i:end], &tele.SendOptions{
 				ParseMode: tele.ModeMarkdownV2,
 			})
@@ -492,7 +479,6 @@ func cleanTicker(s string) string {
 	s = strings.TrimSpace(s)
 	s = strings.TrimPrefix(s, "$")
 	s = strings.ToUpper(s)
-	// Handle "0700.HK" → pass as-is; cloud handles it
 	return s
 }
 

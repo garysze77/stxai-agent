@@ -14,6 +14,16 @@ type Config struct {
 	Telegram   string `mapstructure:"telegram_token"`
 	Model      string `mapstructure:"model"`
 	MaxHistory int    `mapstructure:"max_history"`
+	Lang       string `mapstructure:"lang"`
+}
+
+func sanitizeLang(lang string) string {
+	switch lang {
+	case "zh-HK", "zh-CN":
+		return lang
+	default:
+		return "en"
+	}
 }
 
 func configDir() string {
@@ -31,6 +41,7 @@ func Load() (*Config, error) {
 	v.SetDefault("api_url", "https://api.stxai.app/api/v1")
 	v.SetDefault("model", "stxai-agent")
 	v.SetDefault("max_history", 20)
+	v.SetDefault("lang", "en")
 
 	_ = v.ReadInConfig()
 	// File doesn't exist yet — fine, use defaults
@@ -39,6 +50,7 @@ func Load() (*Config, error) {
 	if err := v.Unmarshal(&cfg); err != nil {
 		return nil, fmt.Errorf("parse config: %w", err)
 	}
+	cfg.Lang = sanitizeLang(cfg.Lang)
 	return &cfg, nil
 }
 
@@ -55,6 +67,7 @@ func Save(cfg *Config) error {
 	v.Set("telegram_token", cfg.Telegram)
 	v.Set("model", cfg.Model)
 	v.Set("max_history", cfg.MaxHistory)
+	v.Set("lang", cfg.Lang)
 
 	return v.WriteConfig()
 }

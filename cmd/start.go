@@ -44,7 +44,7 @@ func runStart(_ *cobra.Command, _ []string) error {
 	}
 	defer s.Close()
 
-	c := client.New(cfg.APIURL, cfg.APIKey)
+	c := client.New(cfg.APIURL, cfg.APIKey, cfg.Lang)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -69,7 +69,7 @@ func runStart(_ *cobra.Command, _ []string) error {
 	runAgent := func(ctx context.Context) error {
 		hasTG := cfg.Telegram != ""
 		if hasTG {
-			b, err := bot.New(cfg.Telegram, c, s)
+			b, err := bot.New(cfg.Telegram, c, s, cfg.Lang)
 			if err != nil {
 				return fmt.Errorf("create bot: %w", err)
 			}

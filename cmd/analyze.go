@@ -9,6 +9,7 @@ import (
 	"github.com/garysze77/stxai-agent/internal/client"
 	"github.com/garysze77/stxai-agent/internal/config"
 	"github.com/garysze77/stxai-agent/internal/display"
+	"github.com/garysze77/stxai-agent/internal/i18n"
 
 	"github.com/spf13/cobra"
 )
@@ -48,7 +49,7 @@ func runAnalyze(ticker string, fast bool) error {
 		return fmt.Errorf("API key not set — run 'stxai setup'")
 	}
 
-	c := client.New(cfg.APIURL, cfg.APIKey)
+	c := client.New(cfg.APIURL, cfg.APIKey, cfg.Lang)
 
 	// Phase 1: quick price
 	price, err := c.GetPrice(ticker)
@@ -99,9 +100,9 @@ func runAnalyze(ticker string, fast bool) error {
 					fmt.Println()
 					firstContent = false
 				}
-				display.ShowNodeHeader(node)
-				display.ShowNodeContent(node, evt.Data)
-				stopSpinner = display.Spinner("generating...")
+				display.ShowNodeHeader(node, cfg.Lang)
+				display.ShowNodeContent(node, evt.Data, cfg.Lang)
+				stopSpinner = display.Spinner(i18n.T("display.generating", cfg.Lang))
 
 			case "heartbeat":
 				// spinner handles this
@@ -111,7 +112,7 @@ func runAnalyze(ticker string, fast bool) error {
 					stopSpinner()
 					stopSpinner = nil
 				}
-				display.ShowError(evt.Data)
+				display.ShowError(evt.Data, cfg.Lang)
 
 			case "done":
 				if stopSpinner != nil {

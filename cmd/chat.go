@@ -31,7 +31,7 @@ func runChat(_ *cobra.Command, _ []string) error {
 		return fmt.Errorf("API key not set — run 'stxai setup'")
 	}
 
-	c := client.New(cfg.APIURL, cfg.APIKey)
+	c := client.New(cfg.APIURL, cfg.APIKey, cfg.Lang)
 
 	fmt.Println("╔══════════════════════════════════╗")
 	fmt.Println("║     STX AI Chat                  ║")

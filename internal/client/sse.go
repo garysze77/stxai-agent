@@ -26,8 +26,15 @@ func (c *Client) StreamAnalyze(ticker string, fast bool) (<-chan SSEEvent, <-cha
 		defer close(errs)
 
 		url := fmt.Sprintf("%s/analyze/%s/stream", c.BaseURL, ticker)
+		params := []string{}
 		if fast {
-			url += "?fast=true"
+			params = append(params, "fast=true")
+		}
+		if c.Lang != "" && c.Lang != "en" {
+			params = append(params, "lang="+c.Lang)
+		}
+		if len(params) > 0 {
+			url += "?" + strings.Join(params, "&")
 		}
 
 		req, err := http.NewRequest("GET", url, nil)
@@ -101,7 +108,11 @@ type PriceResponse struct {
 
 // GetPrice does a quick price lookup for a ticker.
 func (c *Client) GetPrice(ticker string) (*PriceResponse, error) {
-	req, err := http.NewRequest("GET", c.BaseURL+"/price/"+ticker, nil)
+	url := c.BaseURL + "/price/" + ticker
+	if c.Lang != "" && c.Lang != "en" {
+		url += "?lang=" + c.Lang
+	}
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}

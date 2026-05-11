@@ -15,18 +15,30 @@ const defaultBaseURL = "https://api.stxai.app/api/v1"
 type Client struct {
 	BaseURL string
 	APIKey  string
+	Lang    string
 	HTTP    *http.Client
 }
 
-func New(baseURL, apiKey string) *Client {
+func New(baseURL, apiKey, lang string) *Client {
 	if baseURL == "" {
 		baseURL = defaultBaseURL
+	}
+	if lang == "" {
+		lang = "en"
 	}
 	return &Client{
 		BaseURL: baseURL,
 		APIKey:  apiKey,
+		Lang:    lang,
 		HTTP:    &http.Client{Timeout: 300 * time.Second},
 	}
+}
+
+func (c *Client) langParam() string {
+	if c.Lang == "" || c.Lang == "en" {
+		return ""
+	}
+	return "?lang=" + c.Lang
 }
 
 // ── Request types ──
@@ -96,7 +108,7 @@ func (c *Client) Chat(message, session string, deep bool) (*ChatResponse, error)
 	body := ChatRequest{Message: message, Session: session, DeepAnalysis: deep}
 	b, _ := json.Marshal(body)
 
-	req, err := http.NewRequest("POST", c.BaseURL+"/chat", bytes.NewReader(b))
+	req, err := http.NewRequest("POST", c.BaseURL+"/chat"+c.langParam(), bytes.NewReader(b))
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +142,7 @@ func (c *Client) ChatStream(message, session string, deep bool, onChunk func(str
 	body := ChatRequest{Message: message, Session: session, DeepAnalysis: deep}
 	b, _ := json.Marshal(body)
 
-	req, err := http.NewRequest("POST", c.BaseURL+"/chat", bytes.NewReader(b))
+	req, err := http.NewRequest("POST", c.BaseURL+"/chat"+c.langParam(), bytes.NewReader(b))
 	if err != nil {
 		return err
 	}
@@ -162,7 +174,11 @@ func (c *Client) ChatStream(message, session string, deep bool, onChunk func(str
 }
 
 func (c *Client) Analyze(ticker string) (*AnalyzeResponse, error) {
-	req, err := http.NewRequest("GET", c.BaseURL+"/analyze/"+ticker, nil)
+	url := c.BaseURL + "/analyze/" + ticker
+	if c.Lang != "" && c.Lang != "en" {
+		url += "?lang=" + c.Lang
+	}
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +205,7 @@ func (c *Client) Scan(market, criteria string) (*ChatResponse, error) {
 	body := ScanRequest{Market: market, Criteria: criteria}
 	b, _ := json.Marshal(body)
 
-	req, err := http.NewRequest("POST", c.BaseURL+"/scan", bytes.NewReader(b))
+	req, err := http.NewRequest("POST", c.BaseURL+"/scan"+c.langParam(), bytes.NewReader(b))
 	if err != nil {
 		return nil, err
 	}
@@ -218,7 +234,11 @@ func (c *Client) Scan(market, criteria string) (*ChatResponse, error) {
 }
 
 func (c *Client) News(ticker string) (*NewsResponse, error) {
-	req, err := http.NewRequest("GET", c.BaseURL+"/news/"+ticker, nil)
+	url := c.BaseURL + "/news/" + ticker
+	if c.Lang != "" && c.Lang != "en" {
+		url += "?lang=" + c.Lang
+	}
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}

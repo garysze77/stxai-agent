@@ -34,7 +34,7 @@ func runSetup(_ *cobra.Command, _ []string) error {
 		}
 	}
 
-	c := client.New(cfg.APIURL, cfg.APIKey)
+	c := client.New(cfg.APIURL, cfg.APIKey, cfg.Lang)
 
 	ws := web.New(c, cfg, "8080")
 	go func() {

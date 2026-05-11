@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/garysze77/stxai-agent/internal/i18n"
+
 	"github.com/fatih/color"
 )
 
@@ -30,20 +32,20 @@ func ShowPrice(ticker string, price float64, currency string) {
 	fmt.Println()
 }
 
-func ShowNodeHeader(node string) {
+func ShowNodeHeader(node string, lang string) {
 	switch {
 	case strings.Contains(node, "bullish"):
-		bullColor.Println("\n  ── Bull Case ──\n")
+		bullColor.Printf("\n  ── %s ──\n", i18n.T("display.bull_case", lang))
 	case strings.Contains(node, "bearish"):
-		bearColor.Println("\n  ── Bear Case ──\n")
+		bearColor.Printf("\n  ── %s ──\n", i18n.T("display.bear_case", lang))
 	case strings.Contains(node, "lead"):
-		leadColor.Println("\n  ── Synthesis ──\n")
+		leadColor.Printf("\n  ── %s ──\n", i18n.T("display.synthesis", lang))
 	case strings.Contains(node, "signal"):
-		signalColor.Println("\n  ── Signal ──\n")
+		signalColor.Printf("\n  ── %s ──\n", i18n.T("display.signal", lang))
 	}
 }
 
-func ShowNodeContent(node string, data json.RawMessage) {
+func ShowNodeContent(node string, data json.RawMessage, lang string) {
 	var payload map[string]json.RawMessage
 	if err := json.Unmarshal(data, &payload); err != nil {
 		return
@@ -70,21 +72,21 @@ func ShowNodeContent(node string, data json.RawMessage) {
 			var s string
 			json.Unmarshal(bias, &s)
 			if s != "" {
-				signalColor.Printf("\n  Direction: %s", s)
+				signalColor.Printf("\n  %s: %s", i18n.T("display.direction", lang), s)
 			}
 		}
 		if score, ok := payload["confidence_score"]; ok {
 			var n float64
 			json.Unmarshal(score, &n)
 			if n > 0 {
-				signalColor.Printf(" | Confidence: %.0f/100", n)
+				signalColor.Printf(" | %s: %.0f/100", i18n.T("display.confidence", lang), n)
 			}
 		}
 		if strength, ok := payload["signal_strength"]; ok {
 			var s string
 			json.Unmarshal(strength, &s)
 			if s != "" {
-				signalColor.Printf(" | Strength: %s", s)
+				signalColor.Printf(" | %s: %s", i18n.T("display.strength", lang), s)
 			}
 		}
 		fmt.Println()
@@ -124,10 +126,10 @@ func Spinner(label string) func() {
 	}
 }
 
-func ShowError(data json.RawMessage) {
+func ShowError(data json.RawMessage, lang string) {
 	var payload map[string]interface{}
 	json.Unmarshal(data, &payload)
 	node, _ := payload["node"].(string)
 	errMsg, _ := payload["error"].(string)
-	errorColor.Printf("\n  ✗ Error in %s: %s\n", node, errMsg)
+	errorColor.Printf("\n  ✗ %s %s: %s\n", i18n.T("display.error_in", lang), node, errMsg)
 }
