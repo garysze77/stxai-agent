@@ -6,34 +6,40 @@ import (
 
 	"github.com/garysze77/stxai-agent/internal/commands"
 	"github.com/garysze77/stxai-agent/internal/config"
+	"github.com/garysze77/stxai-agent/internal/i18n"
 )
 
 func main() {
-	if len(os.Args) < 2 {
-		printUsage()
+	cfg, err := config.Load()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, i18n.T("cli.errors.load_config", "en", err))
 		os.Exit(1)
 	}
 
-	cfg, err := config.Load()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error loading config: %v\n", err)
+	lang := cfg.Lang
+	if lang == "" {
+		lang = "en"
+	}
+
+	if len(os.Args) < 2 {
+		printUsage(lang)
 		os.Exit(1)
 	}
 
 	switch os.Args[1] {
 	case "price":
 		if len(os.Args) < 3 {
-			fmt.Fprintln(os.Stderr, "Usage: stx price <TICKER>")
+			fmt.Fprintln(os.Stderr, i18n.T("cli.errors.usage_price", lang))
 			os.Exit(1)
 		}
-		if err := commands.PriceCommand(cfg, os.Args[2]); err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		if err := commands.PriceCommand(cfg, os.Args[2], lang); err != nil {
+			fmt.Fprintf(os.Stderr, i18n.T("cli.errors.command_error", lang, err))
 			os.Exit(1)
 		}
 
 	case "analyze":
 		if len(os.Args) < 3 {
-			fmt.Fprintln(os.Stderr, "Usage: stx analyze <TICKER> [--fast]")
+			fmt.Fprintln(os.Stderr, i18n.T("cli.errors.usage_analyze", lang))
 			os.Exit(1)
 		}
 		ticker := os.Args[2]
@@ -44,42 +50,41 @@ func main() {
 			}
 		}
 		if cfg.APIKey == "" {
-			fmt.Fprintln(os.Stderr, "Error: STX_API_KEY not set. Run 'stx configure' first.")
+			fmt.Fprintln(os.Stderr, i18n.T("cli.errors.missing_key", lang))
 			os.Exit(1)
 		}
-		if err := commands.AnalyzeCommand(cfg, ticker, fast); err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		if err := commands.AnalyzeCommand(cfg, ticker, fast, lang); err != nil {
+			fmt.Fprintf(os.Stderr, i18n.T("cli.errors.command_error", lang, err))
 			os.Exit(1)
 		}
 
 	case "configure":
-		if err := commands.ConfigureCommand(); err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		if err := commands.ConfigureCommand(lang); err != nil {
+			fmt.Fprintf(os.Stderr, i18n.T("cli.errors.command_error", lang, err))
 			os.Exit(1)
 		}
 
 	default:
-		printUsage()
+		printUsage(lang)
 		os.Exit(1)
 	}
 }
 
-func printUsage() {
-	fmt.Println(`STX AI — Financial AI Agent CLI
-
-Usage:
-  stx price <TICKER>          Quick price lookup
-  stx analyze <TICKER>         Streaming deep analysis
-  stx analyze <TICKER> --fast  Fast mode (45s timeout)
-  stx configure                Set API URL and API key
-
-Examples:
-  stx price AAPL
-  stx analyze TSLA
-  stx analyze 0700 --fast
-
-Config:
-  STX_API_URL   API base URL (default: http://localhost:8000)
-  STX_API_KEY   Your API key (get from https://stxai.com/dashboard)
-`)
+func printUsage(lang string) {
+	fmt.Println(i18n.T("cli.usage.header", lang))
+	fmt.Println()
+	fmt.Println(i18n.T("cli.usage.desc", lang))
+	fmt.Println("  " + i18n.T("cli.usage.price", lang))
+	fmt.Println("  " + i18n.T("cli.usage.analyze", lang))
+	fmt.Println("  " + i18n.T("cli.usage.analyze_fast", lang))
+	fmt.Println("  " + i18n.T("cli.usage.configure", lang))
+	fmt.Println()
+	fmt.Println(i18n.T("cli.usage.examples", lang))
+	fmt.Println("  stx price AAPL")
+	fmt.Println("  stx analyze TSLA")
+	fmt.Println("  stx analyze 0700 --fast")
+	fmt.Println()
+	fmt.Println(i18n.T("cli.usage.config_header", lang))
+	fmt.Println("  " + i18n.T("cli.usage.env_url", lang))
+	fmt.Println("  " + i18n.T("cli.usage.env_key", lang))
 }

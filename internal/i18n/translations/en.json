@@ -1,0 +1,46 @@
+{
+  "cli": {
+    "usage": {
+      "header": "STX AI — Financial AI Agent CLI",
+      "desc": "Usage:",
+      "price": "stx price <TICKER>          Quick price lookup",
+      "analyze": "stx analyze <TICKER>         Streaming deep analysis",
+      "analyze_fast": "stx analyze <TICKER> --fast  Fast mode (45s timeout)",
+      "configure": "stx configure                Set API URL and API key",
+      "examples": "Examples:",
+      "config_header": "Config:",
+      "env_url": "STX_API_URL   API base URL (default: http://localhost:8000)",
+      "env_key": "STX_API_KEY   Your API key (get from https://stxai.com/dashboard)"
+    },
+    "errors": {
+      "load_config": "Error loading config: %v",
+      "usage_price": "Usage: stx price <TICKER>",
+      "usage_analyze": "Usage: stx analyze <TICKER> [--fast]",
+      "missing_key": "Error: STX_API_KEY not set. Run 'stx configure' first.",
+      "command_error": "Error: %v",
+      "price_failed": "price lookup failed: %w",
+      "stream_error": "stream error: %w",
+      "interrupted": "interrupted",
+      "api_error": "API error %d"
+    },
+    "configure": {
+      "api_url_prompt": "API URL [http://localhost:8000]: ",
+      "api_key_prompt": "API Key: ",
+      "api_key_required": "API key is required",
+      "save_failed": "failed to save config: %w",
+      "saved": "  Config saved to ~/.stx/config.json"
+    },
+    "display": {
+      "bull_case": "Bull Case",
+      "bear_case": "Bear Case",
+      "synthesis": "Synthesis",
+      "signal": "Signal",
+      "direction": "Direction",
+      "confidence": "Confidence",
+      "strength": "Strength",
+      "generating": "generating...",
+      "error_in": "✗ Error in %s: %s",
+      "price_unavailable": "  price unavailable: %v"
+    }
+  }
+}

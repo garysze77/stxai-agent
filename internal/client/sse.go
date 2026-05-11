@@ -22,9 +22,9 @@ func (c *Client) StreamAnalyze(ticker string, fast bool) (<-chan SSEEvent, <-cha
 		defer close(events)
 		defer close(errs)
 
-		url := fmt.Sprintf("%s/api/v1/analyze/%s/stream", c.baseURL, ticker)
+		url := fmt.Sprintf("%s/api/v1/analyze/%s/stream?lang=%s", c.baseURL, ticker, c.lang)
 		if fast {
-			url += "?fast=true"
+			url += "&fast=true"
 		}
 
 		req, err := http.NewRequest("GET", url, nil)
@@ -50,7 +50,6 @@ func (c *Client) StreamAnalyze(ticker string, fast bool) (<-chan SSEEvent, <-cha
 		}
 
 		scanner := bufio.NewScanner(resp.Body)
-		// Increase buffer for large SSE data lines (thesis text can be long)
 		scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
 
 		var currentEvent string

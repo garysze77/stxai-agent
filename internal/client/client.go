@@ -10,6 +10,7 @@ import (
 type Client struct {
 	baseURL string
 	apiKey  string
+	lang    string
 	http    *http.Client
 }
 
@@ -20,16 +21,17 @@ type PriceResponse struct {
 	Currency string  `json:"currency"`
 }
 
-func New(baseURL, apiKey string) *Client {
+func New(baseURL, apiKey, lang string) *Client {
 	return &Client{
 		baseURL: baseURL,
 		apiKey:  apiKey,
+		lang:    lang,
 		http:    &http.Client{Timeout: 10 * time.Second},
 	}
 }
 
 func (c *Client) GetPrice(ticker string) (*PriceResponse, error) {
-	url := fmt.Sprintf("%s/api/v1/price/%s", c.baseURL, ticker)
+	url := fmt.Sprintf("%s/api/v1/price/%s?lang=%s", c.baseURL, ticker, c.lang)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err

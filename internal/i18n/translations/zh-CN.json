@@ -1,0 +1,46 @@
+{
+  "cli": {
+    "usage": {
+      "header": "STX AI — 金融 AI 代理 CLI",
+      "desc": "用法：",
+      "price": "stx price <股票代码>          快速价格查询",
+      "analyze": "stx analyze <股票代码>         流式深度分析",
+      "analyze_fast": "stx analyze <股票代码> --fast  快速模式（45 秒超时）",
+      "configure": "stx configure                 设置 API URL 及 API 密钥",
+      "examples": "示例：",
+      "config_header": "配置：",
+      "env_url": "STX_API_URL   API 基础 URL（默认：http://localhost:8000）",
+      "env_key": "STX_API_KEY   你的 API 密钥（从 https://stxai.com/dashboard 获取）"
+    },
+    "errors": {
+      "load_config": "加载配置时出错：%v",
+      "usage_price": "用法：stx price <股票代码>",
+      "usage_analyze": "用法：stx analyze <股票代码> [--fast]",
+      "missing_key": "错误：未设置 STX_API_KEY。请先执行 'stx configure'。",
+      "command_error": "错误：%v",
+      "price_failed": "价格查询失败：%w",
+      "stream_error": "流式错误：%w",
+      "interrupted": "已中断",
+      "api_error": "API 错误 %d"
+    },
+    "configure": {
+      "api_url_prompt": "API URL [http://localhost:8000]：",
+      "api_key_prompt": "API Key：",
+      "api_key_required": "需要 API 密钥",
+      "save_failed": "无法保存配置：%w",
+      "saved": "  配置已保存至 ~/.stx/config.json"
+    },
+    "display": {
+      "bull_case": "看涨观点",
+      "bear_case": "看跌观点",
+      "synthesis": "综合分析",
+      "signal": "交易信号",
+      "direction": "方向",
+      "confidence": "置信度",
+      "strength": "强度",
+      "generating": "生成中...",
+      "error_in": "✗ %s 错误：%s",
+      "price_unavailable": "  无法获取价格：%v"
+    }
+  }
+}
