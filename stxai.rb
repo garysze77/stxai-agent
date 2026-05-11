@@ -13,7 +13,7 @@
 class Stxai < Formula
   desc "STX AI Agent — Autonomous Financial AI for US & HK stocks"
   homepage "https://github.com/garysze77/stxai-agent"
-  version "0.2.0"
+  version "0.9.0"
   license "MIT"
 
   on_macos do
