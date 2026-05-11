@@ -29,11 +29,12 @@ type Bot struct {
 	store  *store.Store
 	lang   string
 
-	mu    sync.Mutex
-	modes map[int64]string
+	mu           sync.Mutex
+	modes        map[int64]string
+	allowedUsers map[int64]bool
 }
 
-func New(token string, c *client.Client, s *store.Store, lang string) (*Bot, error) {
+func New(token string, c *client.Client, s *store.Store, lang string, allowedUsers []int64) (*Bot, error) {
 	if lang == "" {
 		lang = "en"
 	}
@@ -47,12 +48,18 @@ func New(token string, c *client.Client, s *store.Store, lang string) (*Bot, err
 		return nil, fmt.Errorf("%s", i18n.T("bot.bot_init_failed", lang, err))
 	}
 
+	au := make(map[int64]bool, len(allowedUsers))
+	for _, id := range allowedUsers {
+		au[id] = true
+	}
+
 	return &Bot{
-		tg:     tg,
-		client: c,
-		store:  s,
-		lang:   lang,
-		modes:  make(map[int64]string),
+		tg:           tg,
+		client:       c,
+		store:        s,
+		lang:         lang,
+		modes:        make(map[int64]string),
+		allowedUsers: au,
 	}, nil
 }
 
@@ -82,6 +89,21 @@ func (b *Bot) getMode(userID int64) string {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	return b.modes[userID]
+}
+
+// ── Authorization ──
+
+func (b *Bot) isAllowed(userID int64) bool {
+	if len(b.allowedUsers) == 0 {
+		return true
+	}
+	return b.allowedUsers[userID]
+}
+
+func (b *Bot) denyAccess(c tele.Context) error {
+	return c.Send(i18n.T("bot.unauthorized", b.lang), &tele.SendOptions{
+		ParseMode: tele.ModeMarkdownV2,
+	})
 }
 
 // ── Keyboard ──
@@ -144,6 +166,9 @@ func (b *Bot) registerHandlers() {
 // ── Slash command handlers ──
 
 func (b *Bot) handleStart(c tele.Context) error {
+	if !b.isAllowed(c.Sender().ID) {
+		return b.denyAccess(c)
+	}
 	b.setMode(c.Sender().ID, modeNone)
 	return c.Send(i18n.T("bot.welcome", b.lang), &tele.SendOptions{
 		ParseMode:   tele.ModeMarkdownV2,
@@ -152,6 +177,9 @@ func (b *Bot) handleStart(c tele.Context) error {
 }
 
 func (b *Bot) handleHelp(c tele.Context) error {
+	if !b.isAllowed(c.Sender().ID) {
+		return b.denyAccess(c)
+	}
 	b.setMode(c.Sender().ID, modeNone)
 	return c.Send(i18n.T("bot.help_msg", b.lang), &tele.SendOptions{
 		ParseMode:   tele.ModeMarkdownV2,
@@ -160,6 +188,9 @@ func (b *Bot) handleHelp(c tele.Context) error {
 }
 
 func (b *Bot) handleAnalyze(c tele.Context) error {
+	if !b.isAllowed(c.Sender().ID) {
+		return b.denyAccess(c)
+	}
 	ticker := strings.TrimSpace(c.Message().Payload)
 	if ticker == "" {
 		return b.promptTicker(c, modeAnalyze, i18n.T("bot.prompt_analyze", b.lang))
@@ -168,6 +199,9 @@ func (b *Bot) handleAnalyze(c tele.Context) error {
 }
 
 func (b *Bot) handleSignal(c tele.Context) error {
+	if !b.isAllowed(c.Sender().ID) {
+		return b.denyAccess(c)
+	}
 	ticker := strings.TrimSpace(c.Message().Payload)
 	if ticker == "" {
 		return b.promptTicker(c, modeSignal, i18n.T("bot.prompt_signal", b.lang))
@@ -176,6 +210,9 @@ func (b *Bot) handleSignal(c tele.Context) error {
 }
 
 func (b *Bot) handleNews(c tele.Context) error {
+	if !b.isAllowed(c.Sender().ID) {
+		return b.denyAccess(c)
+	}
 	ticker := strings.TrimSpace(c.Message().Payload)
 	if ticker == "" {
 		return b.promptTicker(c, modeNews, i18n.T("bot.prompt_news", b.lang))
@@ -184,6 +221,9 @@ func (b *Bot) handleNews(c tele.Context) error {
 }
 
 func (b *Bot) handleScan(c tele.Context) error {
+	if !b.isAllowed(c.Sender().ID) {
+		return b.denyAccess(c)
+	}
 	market := strings.TrimSpace(c.Message().Payload)
 	if market == "" {
 		market = "us"
@@ -196,6 +236,9 @@ func (b *Bot) handleScan(c tele.Context) error {
 }
 
 func (b *Bot) handleClear(c tele.Context) error {
+	if !b.isAllowed(c.Sender().ID) {
+		return b.denyAccess(c)
+	}
 	b.setMode(c.Sender().ID, modeNone)
 	b.store.DeleteOldMessages(time.Now())
 	return c.Send(i18n.T("bot.history_cleared", b.lang), &tele.SendOptions{
@@ -207,6 +250,9 @@ func (b *Bot) handleClear(c tele.Context) error {
 // ── Keyboard button / text handler ──
 
 func (b *Bot) handleText(c tele.Context) error {
+	if !b.isAllowed(c.Sender().ID) {
+		return b.denyAccess(c)
+	}
 	text := c.Text()
 	userID := c.Sender().ID
 

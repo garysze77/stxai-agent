@@ -9,12 +9,13 @@ import (
 )
 
 type Config struct {
-	APIKey     string `mapstructure:"api_key"`
-	APIURL     string `mapstructure:"api_url"`
-	Telegram   string `mapstructure:"telegram_token"`
-	Model      string `mapstructure:"model"`
-	MaxHistory int    `mapstructure:"max_history"`
-	Lang       string `mapstructure:"lang"`
+	APIKey       string  `mapstructure:"api_key"`
+	APIURL       string  `mapstructure:"api_url"`
+	Telegram     string  `mapstructure:"telegram_token"`
+	Model        string  `mapstructure:"model"`
+	MaxHistory   int     `mapstructure:"max_history"`
+	Lang         string  `mapstructure:"lang"`
+	AllowedUsers []int64 `mapstructure:"allowed_users"`
 }
 
 func sanitizeLang(lang string) string {
@@ -42,6 +43,7 @@ func Load() (*Config, error) {
 	v.SetDefault("model", "stxai-agent")
 	v.SetDefault("max_history", 20)
 	v.SetDefault("lang", "en")
+	v.SetDefault("allowed_users", []int64{})
 
 	_ = v.ReadInConfig()
 	// File doesn't exist yet — fine, use defaults
@@ -68,6 +70,7 @@ func Save(cfg *Config) error {
 	v.Set("model", cfg.Model)
 	v.Set("max_history", cfg.MaxHistory)
 	v.Set("lang", cfg.Lang)
+	v.Set("allowed_users", cfg.AllowedUsers)
 
 	return v.WriteConfig()
 }

@@ -69,7 +69,7 @@ func runStart(_ *cobra.Command, _ []string) error {
 	runAgent := func(ctx context.Context) error {
 		hasTG := cfg.Telegram != ""
 		if hasTG {
-			b, err := bot.New(cfg.Telegram, c, s, cfg.Lang)
+			b, err := bot.New(cfg.Telegram, c, s, cfg.Lang, cfg.AllowedUsers)
 			if err != nil {
 				return fmt.Errorf("create bot: %w", err)
 			}

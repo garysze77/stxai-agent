@@ -106,6 +106,7 @@
     "signal_header": "⚡ *%s 訊號*",
     "ticker_analyze_header": "📈 *%s*",
     "price": "價格",
+    "unauthorized": "🚫 你未被授權使用此 Bot。請聯絡 Bot 擁有者以申請存取權限。",
     "bot_init_failed": "Telegram bot 初始化失敗：%v",
     "strong": "強",
     "moderate": "中等",
