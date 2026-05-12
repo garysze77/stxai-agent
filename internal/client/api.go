@@ -34,11 +34,11 @@ func New(baseURL, apiKey, lang string) *Client {
 	}
 }
 
-func (c *Client) langParam() string {
-	if c.Lang == "" || c.Lang == "en" {
+func langQ(lang string) string {
+	if lang == "" || lang == "en" {
 		return ""
 	}
-	return "?lang=" + c.Lang
+	return "?lang=" + lang
 }
 
 // ── Request types ──
@@ -104,11 +104,11 @@ func readError(resp *http.Response) string {
 
 // ── API methods ──
 
-func (c *Client) Chat(message, session string, deep bool) (*ChatResponse, error) {
+func (c *Client) Chat(message, session, lang string, deep bool) (*ChatResponse, error) {
 	body := ChatRequest{Message: message, Session: session, DeepAnalysis: deep}
 	b, _ := json.Marshal(body)
 
-	req, err := http.NewRequest("POST", c.BaseURL+"/chat"+c.langParam(), bytes.NewReader(b))
+	req, err := http.NewRequest("POST", c.BaseURL+"/chat"+langQ(lang), bytes.NewReader(b))
 	if err != nil {
 		return nil, err
 	}
@@ -138,11 +138,11 @@ func (c *Client) Chat(message, session string, deep bool) (*ChatResponse, error)
 	return &cr, nil
 }
 
-func (c *Client) ChatStream(message, session string, deep bool, onChunk func(string)) error {
+func (c *Client) ChatStream(message, session, lang string, deep bool, onChunk func(string)) error {
 	body := ChatRequest{Message: message, Session: session, DeepAnalysis: deep}
 	b, _ := json.Marshal(body)
 
-	req, err := http.NewRequest("POST", c.BaseURL+"/chat"+c.langParam(), bytes.NewReader(b))
+	req, err := http.NewRequest("POST", c.BaseURL+"/chat"+langQ(lang), bytes.NewReader(b))
 	if err != nil {
 		return err
 	}
@@ -173,11 +173,8 @@ func (c *Client) ChatStream(message, session string, deep bool, onChunk func(str
 	return scanner.Err()
 }
 
-func (c *Client) Analyze(ticker string) (*AnalyzeResponse, error) {
-	url := c.BaseURL + "/analyze/" + ticker
-	if c.Lang != "" && c.Lang != "en" {
-		url += "?lang=" + c.Lang
-	}
+func (c *Client) Analyze(ticker, lang string) (*AnalyzeResponse, error) {
+	url := c.BaseURL + "/analyze/" + ticker + langQ(lang)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
@@ -201,11 +198,11 @@ func (c *Client) Analyze(ticker string) (*AnalyzeResponse, error) {
 	return &ar, nil
 }
 
-func (c *Client) Scan(market, criteria string) (*ChatResponse, error) {
+func (c *Client) Scan(market, criteria, lang string) (*ChatResponse, error) {
 	body := ScanRequest{Market: market, Criteria: criteria}
 	b, _ := json.Marshal(body)
 
-	req, err := http.NewRequest("POST", c.BaseURL+"/scan"+c.langParam(), bytes.NewReader(b))
+	req, err := http.NewRequest("POST", c.BaseURL+"/scan"+langQ(lang), bytes.NewReader(b))
 	if err != nil {
 		return nil, err
 	}
@@ -233,15 +230,14 @@ func (c *Client) Scan(market, criteria string) (*ChatResponse, error) {
 	return &ChatResponse{Reply: result.Results}, nil
 }
 
-func (c *Client) PairRegister(code string, telegramUserID int64, telegramUsername string) error {
+func (c *Client) PairLink(telegramUserID int64, telegramUsername string) error {
 	body := map[string]any{
-		"code":              code,
 		"telegram_user_id":  telegramUserID,
 		"telegram_username": telegramUsername,
 	}
 	b, _ := json.Marshal(body)
 
-	req, err := http.NewRequest("POST", c.BaseURL+"/pairing/register", bytes.NewReader(b))
+	req, err := http.NewRequest("POST", c.BaseURL+"/pairing/link", bytes.NewReader(b))
 	if err != nil {
 		return err
 	}
@@ -260,11 +256,8 @@ func (c *Client) PairRegister(code string, telegramUserID int64, telegramUsernam
 	return nil
 }
 
-func (c *Client) News(ticker string) (*NewsResponse, error) {
-	url := c.BaseURL + "/news/" + ticker
-	if c.Lang != "" && c.Lang != "en" {
-		url += "?lang=" + c.Lang
-	}
+func (c *Client) News(ticker, lang string) (*NewsResponse, error) {
+	url := c.BaseURL + "/news/" + ticker + langQ(lang)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err

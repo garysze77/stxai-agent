@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"math/rand/v2"
 	"strings"
 	"sync"
 	"time"
@@ -296,20 +295,16 @@ func (b *Bot) handlePair(c tele.Context) error {
 	}
 	userLang := b.getUserLang(c.Sender().ID)
 
-	code := fmt.Sprintf("%06d", rand.IntN(1000000))
-	username := c.Sender().Username
-
-	err := b.client.PairRegister(code, c.Sender().ID, username)
+	err := b.client.PairLink(c.Sender().ID, c.Sender().Username)
 	if err != nil {
-		log.Printf("PairRegister failed: %v", err)
+		log.Printf("PairLink failed: %v", err)
 		return c.Send("❌ "+escapeMD(err.Error()), &tele.SendOptions{
 			ParseMode:   tele.ModeMarkdownV2,
 			ReplyMarkup: b.mainKeyboard(),
 		})
 	}
 
-	msg := fmt.Sprintf(i18n.T("bot.pair_success", userLang), code)
-	return c.Send(msg, &tele.SendOptions{
+	return c.Send(i18n.T("bot.pair_success", userLang), &tele.SendOptions{
 		ParseMode:   tele.ModeMarkdownV2,
 		ReplyMarkup: b.mainKeyboard(),
 	})
@@ -428,7 +423,7 @@ func (b *Bot) runAnalyze(c tele.Context, ticker string) error {
 		&tele.SendOptions{ParseMode: tele.ModeMarkdownV2})
 	c.Notify(tele.Typing)
 
-	ar, err := b.client.Analyze(ticker)
+	ar, err := b.client.Analyze(ticker, lang)
 	if err != nil {
 		return c.Send("❌ "+escapeMD(err.Error()),
 			&tele.SendOptions{ParseMode: tele.ModeMarkdownV2, ReplyMarkup: b.mainKeyboard()})
@@ -447,7 +442,7 @@ func (b *Bot) runSignal(c tele.Context, ticker string) error {
 		&tele.SendOptions{ParseMode: tele.ModeMarkdownV2})
 	c.Notify(tele.Typing)
 
-	ar, err := b.client.Analyze(ticker)
+	ar, err := b.client.Analyze(ticker, lang)
 	if err != nil {
 		return c.Send("❌ "+escapeMD(err.Error()),
 			&tele.SendOptions{ParseMode: tele.ModeMarkdownV2, ReplyMarkup: b.mainKeyboard()})
@@ -469,7 +464,7 @@ func (b *Bot) runNews(c tele.Context, ticker string) error {
 		&tele.SendOptions{ParseMode: tele.ModeMarkdownV2})
 	c.Notify(tele.Typing)
 
-	nr, err := b.client.News(ticker)
+	nr, err := b.client.News(ticker, lang)
 	if err != nil {
 		return c.Send("❌ "+escapeMD(err.Error()),
 			&tele.SendOptions{ParseMode: tele.ModeMarkdownV2, ReplyMarkup: b.mainKeyboard()})
@@ -508,7 +503,7 @@ func (b *Bot) runScan(c tele.Context, market string) error {
 		&tele.SendOptions{ParseMode: tele.ModeMarkdownV2})
 	c.Notify(tele.Typing)
 
-	resp, err := b.client.Scan(market, "")
+	resp, err := b.client.Scan(market, "", lang)
 	if err != nil {
 		return c.Send("❌ "+escapeMD(err.Error()),
 			&tele.SendOptions{ParseMode: tele.ModeMarkdownV2, ReplyMarkup: b.mainKeyboard()})
@@ -525,7 +520,7 @@ func (b *Bot) runChat(c tele.Context, message string) error {
 
 	b.store.SaveMessage(sessionID, "user", message)
 
-	resp, err := b.client.Chat(message, sessionID, false)
+	resp, err := b.client.Chat(message, sessionID, lang, false)
 	if err != nil {
 		return c.Send("❌ "+escapeMD(err.Error()),
 			&tele.SendOptions{ParseMode: tele.ModeMarkdownV2, ReplyMarkup: b.mainKeyboard()})

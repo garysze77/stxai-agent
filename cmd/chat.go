@@ -95,7 +95,7 @@ func runChat(_ *cobra.Command, _ []string) error {
 		if strings.HasPrefix(input, "/analyze ") {
 			ticker := strings.TrimSpace(strings.TrimPrefix(input, "/analyze "))
 			fmt.Print("🔬 Running multi-agent deep analysis... ")
-			ar, err := c.Analyze(ticker)
+			ar, err := c.Analyze(ticker, cfg.Lang)
 			if err != nil {
 				fmt.Printf("❌ %s\n\n", err.Error())
 				continue
@@ -110,7 +110,7 @@ func runChat(_ *cobra.Command, _ []string) error {
 		} else {
 			fmt.Print("🤖 ")
 		}
-		resp, err := c.Chat(input, sessionID, deepMode)
+		resp, err := c.Chat(input, sessionID, cfg.Lang, deepMode)
 		if err != nil {
 			fmt.Printf("❌ %s\n\n", err.Error())
 			continue

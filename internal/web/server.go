@@ -165,7 +165,7 @@ func (s *Server) handleChat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := s.client.Chat(body.Message, body.SessionID, false)
+	resp, err := s.client.Chat(body.Message, body.SessionID, s.cfg.Lang, false)
 	if err != nil {
 		writeError(w, 500, err.Error())
 		return
@@ -191,7 +191,7 @@ func (s *Server) handleAnalyze(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := s.client.Analyze(ticker)
+	resp, err := s.client.Analyze(ticker, s.cfg.Lang)
 	if err != nil {
 		writeError(w, 500, err.Error())
 		return
@@ -219,7 +219,7 @@ func (s *Server) handleScan(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := s.client.Scan(body.Market, body.Criteria)
+	resp, err := s.client.Scan(body.Market, body.Criteria, s.cfg.Lang)
 	if err != nil {
 		writeError(w, 500, err.Error())
 		return
@@ -245,7 +245,7 @@ func (s *Server) handleNews(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := s.client.News(ticker)
+	resp, err := s.client.News(ticker, s.cfg.Lang)
 	if err != nil {
 		writeError(w, 500, err.Error())
 		return
