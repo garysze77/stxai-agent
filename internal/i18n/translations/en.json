@@ -118,7 +118,11 @@
     "bot_init_failed": "telegram bot init: %v",
     "strong": "Strong",
     "moderate": "Moderate",
-    "weak": "Weak"
+    "weak": "Weak",
+    "bullish": "Bullish‑leaning",
+    "bearish": "Bearish‑leaning",
+    "balanced": "Balanced",
+    "display_confidence": "Confidence"
   },
   "web": {
     "bot_starting": "STX AI Bot starting...",

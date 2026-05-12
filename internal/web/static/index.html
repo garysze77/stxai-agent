@@ -360,6 +360,13 @@ const TRANSLATIONS = {
     scan_failed: "Scan failed",
     signal_card: "Signal Card",
     not_advice: "Not trading advice. Directional signal only.",
+    signal_bullish: "Bullish-leaning",
+    signal_bearish: "Bearish-leaning",
+    signal_balanced: "Balanced",
+    signal_strong: "Strong",
+    signal_moderate: "Moderate",
+    signal_weak: "Weak",
+    signal_confidence: "Confidence",
     settings_title: "Settings",
     settings_subtitle: "Update your agent configuration.",
     settings_lang_label: "Language / 語言",
@@ -422,6 +429,13 @@ const TRANSLATIONS = {
     scan_failed: "掃描失敗",
     signal_card: "信號卡",
     not_advice: "⚠️ 非投資建議，僅為方向性信號。",
+    signal_bullish: "看好傾向",
+    signal_bearish: "看淡傾向",
+    signal_balanced: "中性",
+    signal_strong: "強",
+    signal_moderate: "中等",
+    signal_weak: "弱",
+    signal_confidence: "信心分數",
     settings_title: "設定",
     settings_subtitle: "更新你的 Agent 設定。",
     settings_lang_label: "Language / 語言",
@@ -484,6 +498,13 @@ const TRANSLATIONS = {
     scan_failed: "扫描失败",
     signal_card: "信号卡",
     not_advice: "⚠️ 非投资建议，仅为方向性信号。",
+    signal_bullish: "看涨倾向",
+    signal_bearish: "看跌倾向",
+    signal_balanced: "中性",
+    signal_strong: "强",
+    signal_moderate: "中等",
+    signal_weak: "弱",
+    signal_confidence: "信心分数",
     settings_title: "设置",
     settings_subtitle: "更新你的 Agent 配置。",
     settings_lang_label: "Language / 语言",
@@ -941,16 +962,18 @@ function updateStatus() {
 
 function formatSignalInline(s) {
   let emoji = '⚪';
+  let biasLabel = s.directional_bias;
   switch(s.directional_bias) {
-    case 'Bullish-leaning': emoji = '🟢'; break;
-    case 'Bearish-leaning': emoji = '🔴'; break;
-    case 'Balanced': emoji = '🟡'; break;
+    case 'Bullish-leaning': emoji = '🟢'; biasLabel = t('signal_bullish'); break;
+    case 'Bearish-leaning': emoji = '🔴'; biasLabel = t('signal_bearish'); break;
+    case 'Balanced': emoji = '🟡'; biasLabel = t('signal_balanced'); break;
   }
   let bar = '██';
+  let strengthLabel = s.signal_strength;
   switch(s.signal_strength) {
-    case 'Strong': bar = '████'; break;
-    case 'Moderate': bar = '███'; break;
-    case 'Weak': bar = '██'; break;
+    case 'Strong': bar = '████'; strengthLabel = t('signal_strong'); break;
+    case 'Moderate': bar = '███'; strengthLabel = t('signal_moderate'); break;
+    case 'Weak': bar = '██'; strengthLabel = t('signal_weak'); break;
   }
   let cls = 'neutral';
   if (s.directional_bias === 'Bullish-leaning') cls = 'bullish';
@@ -959,7 +982,7 @@ function formatSignalInline(s) {
   return '<div class="signal-card ' + cls + '">' +
     '---\n' +
     '📊 **' + t('signal_card') + '**\n' +
-    emoji + ' **' + escapeHtml(s.directional_bias) + '** &nbsp;|&nbsp; Confidence: **' + s.confidence_score + '/100** &nbsp;|&nbsp; ' + bar + '\n' +
+    emoji + ' **' + escapeHtml(biasLabel) + '** &nbsp;|&nbsp; ' + t('signal_confidence') + ': **' + s.confidence_score + '/100** &nbsp;|&nbsp; ' + bar + '\n' +
     '⚠️ ' + t('not_advice') +
     '</div>';
 }

@@ -118,7 +118,11 @@
     "bot_init_failed": "Telegram bot 初始化失败：%v",
     "strong": "强",
     "moderate": "中等",
-    "weak": "弱"
+    "weak": "弱",
+    "bullish": "看涨倾向",
+    "bearish": "看跌倾向",
+    "balanced": "中性",
+    "display_confidence": "信心分数"
   },
   "web": {
     "bot_starting": "STX AI Bot 启动中...",

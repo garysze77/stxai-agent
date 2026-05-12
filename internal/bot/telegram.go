@@ -585,35 +585,49 @@ func (b *Bot) formatSignalCard(ar *client.AnalyzeResponse, lang string) string {
 
 func (b *Bot) formatSignalInline(s *client.SignalData, lang string) string {
 	emoji := "⚪"
+	biasLabel := s.DirectionalBias
 	switch s.DirectionalBias {
 	case "Bullish-leaning":
 		emoji = "🟢"
+		biasLabel = i18n.T("bot.bullish", lang)
 	case "Bearish-leaning":
 		emoji = "🔴"
+		biasLabel = i18n.T("bot.bearish", lang)
 	case "Balanced":
 		emoji = "🟡"
+		biasLabel = i18n.T("bot.balanced", lang)
 	}
 
 	strengthBar := ""
+	strengthLabel := s.SignalStrength
 	switch s.SignalStrength {
 	case "Strong":
 		strengthBar = "████"
+		strengthLabel = i18n.T("bot.strong", lang)
 	case "Moderate":
 		strengthBar = "███"
+		strengthLabel = i18n.T("bot.moderate", lang)
 	case "Weak":
 		strengthBar = "██"
+		strengthLabel = i18n.T("bot.weak", lang)
 	default:
 		strengthBar = "██"
 	}
 
+	confidenceLabel := i18n.T("bot.display_confidence", lang)
+	if confidenceLabel == "bot.display_confidence" {
+		confidenceLabel = i18n.T("display.confidence", lang)
+	}
+
 	return fmt.Sprintf(
 		"\\-\\-\\-\n"+i18n.T("bot.signal_card", lang)+"\n"+
-			"%s *%s*  \\|  "+i18n.T("display.confidence", lang)+": *%d/100*  \\|  %s\n"+
+			"%s *%s*  \\|  %s: *%d/100*  \\|  %s\n"+
 			i18n.T("bot.not_advice", lang),
 		emoji,
-		escapeMD(s.DirectionalBias),
+		escapeMD(biasLabel),
+		confidenceLabel,
 		s.ConfidenceScore,
-		strengthBar,
+		strengthLabel+" "+strengthBar,
 	)
 }
 
