@@ -294,10 +294,18 @@ func (b *Bot) handlePair(c tele.Context) error {
 		return b.denyAccess(c)
 	}
 	userLang := b.getUserLang(c.Sender().ID)
+	code := strings.TrimSpace(c.Message().Payload)
 
-	err := b.client.PairLink(c.Sender().ID, c.Sender().Username)
+	if code == "" {
+		return c.Send(i18n.T("bot.pair_usage", userLang), &tele.SendOptions{
+			ParseMode:   tele.ModeMarkdownV2,
+			ReplyMarkup: b.mainKeyboard(),
+		})
+	}
+
+	err := b.client.PairClaim(code, c.Sender().ID, c.Sender().Username)
 	if err != nil {
-		log.Printf("PairLink failed: %v", err)
+		log.Printf("PairClaim failed: %v", err)
 		return c.Send("❌ "+escapeMD(err.Error()), &tele.SendOptions{
 			ParseMode:   tele.ModeMarkdownV2,
 			ReplyMarkup: b.mainKeyboard(),

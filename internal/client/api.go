@@ -230,14 +230,41 @@ func (c *Client) Scan(market, criteria, lang string) (*ChatResponse, error) {
 	return &ChatResponse{Reply: result.Results}, nil
 }
 
-func (c *Client) PairLink(telegramUserID int64, telegramUsername string) error {
+func (c *Client) PairGenerate() (string, error) {
+	req, err := http.NewRequest("POST", c.BaseURL+"/pairing/generate", nil)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Authorization", "Bearer "+c.APIKey)
+
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return "", fmt.Errorf("%s", readError(resp))
+	}
+
+	var result struct {
+		Code string `json:"code"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "", err
+	}
+	return result.Code, nil
+}
+
+func (c *Client) PairClaim(code string, telegramUserID int64, telegramUsername string) error {
 	body := map[string]any{
+		"code":              code,
 		"telegram_user_id":  telegramUserID,
 		"telegram_username": telegramUsername,
 	}
 	b, _ := json.Marshal(body)
 
-	req, err := http.NewRequest("POST", c.BaseURL+"/pairing/link", bytes.NewReader(b))
+	req, err := http.NewRequest("POST", c.BaseURL+"/pairing/claim", bytes.NewReader(b))
 	if err != nil {
 		return err
 	}

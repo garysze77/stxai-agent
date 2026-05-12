@@ -31,6 +31,7 @@ func init() {
 	rootCmd.AddCommand(cmd.AnalyzeCmd())
 	rootCmd.AddCommand(cmd.ServiceCmd())
 	rootCmd.AddCommand(cmd.UpdateCmd())
+	rootCmd.AddCommand(cmd.PairCmd())
 }
 
 func main() {

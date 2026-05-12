@@ -113,6 +113,7 @@
     "unauthorized": "🚫 You are not authorized to use this bot. Contact the bot owner to request access.",
     "select_lang": "🌐 *Select Language / 選擇語言*",
     "lang_set": "✅ Language set to %s.",
+    "pair_usage": "🔗 *Pair Your Account*\n\nGenerate a pairing code by running:\n`stxai pair`\n\nThen use:\n`/pair <code>`\n\nExample: `/pair 123456`",
     "pair_success": "✅ *Account linked!* Your Telegram account is now connected to your STX AI account.",
     "bot_init_failed": "telegram bot init: %v",
     "strong": "Strong",

@@ -57,6 +57,7 @@ func (s *Server) Start() error {
 	mux.HandleFunc("/api/scan", s.handleScan)
 	mux.HandleFunc("/api/news/", s.handleNews)
 	mux.HandleFunc("/api/clear", s.handleClear)
+	mux.HandleFunc("/api/pair", s.handlePairGenerate)
 
 	// Health check
 	mux.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
@@ -268,6 +269,20 @@ func (s *Server) checkAuth(w http.ResponseWriter) bool {
 		return false
 	}
 	return true
+}
+
+func (s *Server) handlePairGenerate(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, 405, "method not allowed")
+		return
+	}
+	code, err := s.client.PairGenerate()
+	if err != nil {
+		writeError(w, 500, err.Error())
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"code": code})
 }
 
 func writeError(w http.ResponseWriter, code int, msg string) {
