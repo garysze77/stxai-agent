@@ -295,6 +295,10 @@ func (b *Bot) handlePair(c tele.Context) error {
 	}
 	userLang := b.getUserLang(c.Sender().ID)
 	code := strings.TrimSpace(c.Message().Payload)
+	// Fallback: if routed via handleText, telebot doesn't parse payload
+	if code == "" {
+		code = strings.TrimSpace(strings.TrimPrefix(c.Text(), "/pair"))
+	}
 
 	if code == "" {
 		return c.Send(i18n.T("bot.pair_usage", userLang), &tele.SendOptions{
