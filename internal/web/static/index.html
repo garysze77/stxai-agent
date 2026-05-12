@@ -296,6 +296,13 @@ header .dot.off { background: var(--red); }
     <input id="settings-token" placeholder="123:abc..." autocomplete="off">
     <p class="hint"><span data-i18n="settings_tg_hint_prefix">From</span> <a href="https://t.me/BotFather" target="_blank">@BotFather</a></p>
 
+    <label data-i18n="settings_pair_label">Telegram Pairing</label>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button id="settings-pair-btn" onclick="generatePairCode()" data-i18n="settings_pair_generate" style="background:var(--accent);color:#000;border:none;padding:8px 14px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">Generate Pairing Code</button>
+      <span id="pair-code-display" style="font-family:monospace;font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;display:none;"></span>
+    </div>
+    <p class="hint"><span data-i18n="settings_pair_hint">Run /pair &lt;code&gt; in your STX AI bot on Telegram to link your account.</span></p>
+
     <div id="settings-error"></div>
     <div id="settings-actions">
       <button id="settings-close-btn" onclick="closeSettings()" data-i18n="settings_close">Cancel</button>
@@ -364,7 +371,12 @@ const TRANSLATIONS = {
     settings_saved: "Settings saved.",
     settings_save_failed: "Failed to save settings.",
     lang_changed: "Language updated.",
-    price_label: "Price"
+    price_label: "Price",
+    settings_pair_label: "Telegram Pairing",
+    settings_pair_generate: "Generate Pairing Code",
+    settings_pair_generating: "Generating...",
+    settings_pair_hint: "Run /pair <code> in your STX AI bot on Telegram to link your account.",
+    pair_code_label: "Your pairing code:"
   },
   "zh-HK": {
     header_ver: "Agent",
@@ -421,7 +433,12 @@ const TRANSLATIONS = {
     settings_saved: "設定已儲存。",
     settings_save_failed: "儲存設定失敗。",
     lang_changed: "語言已更新。",
-    price_label: "價格"
+    price_label: "價格",
+    settings_pair_label: "Telegram 綁定",
+    settings_pair_generate: "產生配對碼",
+    settings_pair_generating: "產生中...",
+    settings_pair_hint: "喺你嘅 STX AI Telegram bot 輸入 /pair <code> 以連結帳戶。",
+    pair_code_label: "你的配對碼："
   },
   "zh-CN": {
     header_ver: "Agent",
@@ -478,7 +495,12 @@ const TRANSLATIONS = {
     settings_saved: "设置已保存。",
     settings_save_failed: "保存设置失败。",
     lang_changed: "语言已更新。",
-    price_label: "价格"
+    price_label: "价格",
+    settings_pair_label: "Telegram 绑定",
+    settings_pair_generate: "生成配对码",
+    settings_pair_generating: "生成中...",
+    settings_pair_hint: "在你的 STX AI Telegram bot 输入 /pair <code> 以链接账户。",
+    pair_code_label: "你的配对码："
   }
 };
 
@@ -646,6 +668,30 @@ async function saveSettings() {
   } catch(e) {
     errEl.textContent = e.message;
     errEl.style.display = 'block';
+  }
+}
+
+async function generatePairCode() {
+  const btn = document.getElementById('settings-pair-btn');
+  const display = document.getElementById('pair-code-display');
+  btn.disabled = true;
+  btn.textContent = t('settings_pair_generating');
+  display.style.display = 'none';
+  try {
+    const r = await fetch('/api/pair', { method: 'POST' });
+    if (!r.ok) {
+      const e = await r.json();
+      throw new Error(e.error || 'Failed to generate pairing code');
+    }
+    const data = await r.json();
+    display.textContent = t('pair_code_label') + ' ' + data.code;
+    display.style.display = '';
+    showToast(data.code);
+  } catch(e) {
+    showToast('❌ ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = t('settings_pair_generate');
   }
 }
 
