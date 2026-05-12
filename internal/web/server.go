@@ -30,6 +30,7 @@ type Server struct {
 type configPayload struct {
 	APIKey        string `json:"api_key,omitempty"`
 	TelegramToken string `json:"telegram_token,omitempty"`
+	Lang          string `json:"lang,omitempty"`
 	Configured    bool   `json:"configured"`
 }
 
@@ -105,9 +106,14 @@ func (s *Server) handleConfig(w http.ResponseWriter, r *http.Request) {
 		if s.cfg.Telegram != "" {
 			token = "••••••••"
 		}
+		lang := s.cfg.Lang
+		if lang == "" {
+			lang = "en"
+		}
 		json.NewEncoder(w).Encode(configPayload{
 			APIKey:        key,
 			TelegramToken: token,
+			Lang:          lang,
 			Configured:    s.cfg.APIKey != "",
 		})
 
@@ -122,6 +128,9 @@ func (s *Server) handleConfig(w http.ResponseWriter, r *http.Request) {
 		}
 		if p.TelegramToken != "" && p.TelegramToken != "••••••••" {
 			s.cfg.Telegram = p.TelegramToken
+		}
+		if p.Lang != "" {
+			s.cfg.Lang = p.Lang
 		}
 		if err := config.Save(s.cfg); err != nil {
 			writeError(w, 500, "save config: "+err.Error())

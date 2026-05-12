@@ -233,6 +233,33 @@ func (c *Client) Scan(market, criteria string) (*ChatResponse, error) {
 	return &ChatResponse{Reply: result.Results}, nil
 }
 
+func (c *Client) PairComplete(code string, telegramUserID int64, telegramUsername string) error {
+	body := map[string]any{
+		"code":              code,
+		"telegram_user_id":  telegramUserID,
+		"telegram_username": telegramUsername,
+	}
+	b, _ := json.Marshal(body)
+
+	req, err := http.NewRequest("POST", c.BaseURL+"/pairing/complete", bytes.NewReader(b))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+c.APIKey)
+
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("%s", readError(resp))
+	}
+	return nil
+}
+
 func (c *Client) News(ticker string) (*NewsResponse, error) {
 	url := c.BaseURL + "/news/" + ticker
 	if c.Lang != "" && c.Lang != "en" {

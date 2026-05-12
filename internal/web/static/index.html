@@ -34,7 +34,13 @@ header {
 }
 header .logo { font-weight: 700; font-size: 16px; color: var(--accent); letter-spacing: 1px; }
 header .ver { font-size: 11px; color: var(--dim); margin-left: 4px; }
-header .status { margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--dim); }
+header .spacer { flex: 1; }
+header .lang-select {
+  background: var(--input-bg); color: var(--text); border: 1px solid var(--border);
+  border-radius: 6px; padding: 4px 8px; font-size: 12px; cursor: pointer; outline: none;
+}
+header .lang-select:focus { border-color: var(--accent); }
+header .status { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--dim); }
 header .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
 header .dot.off { background: var(--red); }
 
@@ -123,12 +129,13 @@ header .dot.off { background: var(--red); }
 #setup-box h2 { font-size: 20px; color: #fff; margin-bottom: 4px; }
 #setup-box .sub { font-size: 13px; color: var(--dim); margin-bottom: 22px; }
 #setup-box label { display: block; font-size: 12px; font-weight: 600; color: var(--dim); margin-bottom: 4px; margin-top: 14px; text-transform: uppercase; letter-spacing: .5px; }
-#setup-box input {
+#setup-box input, #setup-box select {
   width: 100%; background: var(--input-bg); color: var(--text);
   border: 1px solid var(--border); border-radius: 8px;
   padding: 10px 12px; font-size: 14px; outline: none;
 }
-#setup-box input:focus { border-color: var(--accent); }
+#setup-box input:focus, #setup-box select:focus { border-color: var(--accent); }
+#setup-box select { cursor: pointer; }
 #setup-box .hint { font-size: 11px; color: var(--dim); margin-top: 4px; }
 #setup-box .hint a { color: var(--accent); }
 #setup-actions { display: flex; gap: 8px; margin-top: 22px; }
@@ -139,6 +146,46 @@ header .dot.off { background: var(--red); }
 #setup-save { background: var(--accent); color: #000; }
 #setup-skip { background: var(--input-bg); color: var(--text); border: 1px solid var(--border); }
 #setup-error { color: var(--red); font-size: 12px; margin-top: 8px; display: none; }
+
+/* ── Settings Panel ── */
+#settings-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  display: none; align-items: center; justify-content: center;
+  z-index: 150;
+}
+#settings-overlay.show { display: flex; }
+#settings-box {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 14px; padding: 36px 32px; width: 440px; max-width: 90vw;
+}
+#settings-box h2 { font-size: 20px; color: #fff; margin-bottom: 4px; }
+#settings-box .sub { font-size: 13px; color: var(--dim); margin-bottom: 22px; }
+#settings-box label { display: block; font-size: 12px; font-weight: 600; color: var(--dim); margin-bottom: 4px; margin-top: 14px; text-transform: uppercase; letter-spacing: .5px; }
+#settings-box input, #settings-box select {
+  width: 100%; background: var(--input-bg); color: var(--text);
+  border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 12px; font-size: 14px; outline: none;
+}
+#settings-box input:focus, #settings-box select:focus { border-color: var(--accent); }
+#settings-box select { cursor: pointer; }
+#settings-box .hint { font-size: 11px; color: var(--dim); margin-top: 4px; }
+#settings-box .hint a { color: var(--accent); }
+#settings-actions { display: flex; gap: 8px; margin-top: 22px; }
+#settings-actions button {
+  flex: 1; padding: 10px; border-radius: 8px; font-weight: 600;
+  cursor: pointer; font-size: 14px; border: none;
+}
+#settings-save-btn { background: var(--accent); color: #000; }
+#settings-close-btn { background: var(--input-bg); color: var(--text); border: 1px solid var(--border); }
+#settings-error { color: var(--red); font-size: 12px; margin-top: 8px; display: none; }
+
+/* ── Settings gear icon ── */
+#gear-btn {
+  background: none; border: 1px solid var(--border); color: var(--dim);
+  border-radius: 6px; padding: 4px 8px; cursor: pointer; font-size: 14px;
+  transition: all .15s;
+}
+#gear-btn:hover { border-color: var(--accent); color: var(--text); }
 
 /* ── Typing Indicator ── */
 .typing { display: flex; gap: 4px; padding: 8px 16px; }
@@ -156,20 +203,28 @@ header .dot.off { background: var(--red); }
 /* ── Toast ── */
 #toast {
   position: fixed; top: 16px; right: 16px; z-index: 200;
-  background: var(--red); color: #fff; padding: 10px 18px;
+  background: var(--green); color: #000; padding: 10px 18px;
   border-radius: 8px; font-size: 13px; font-weight: 500;
   opacity: 0; transform: translateY(-10px); transition: all .25s;
   pointer-events: none;
 }
 #toast.show { opacity: 1; transform: translateY(0); }
+#toast.error { background: var(--red); color: #fff; }
 </style>
 </head>
 <body>
 
 <!-- Header -->
 <header>
-  <span class="logo">STX AI</span><span class="ver">Agent</span>
-  <span class="status"><span class="dot" id="status-dot"></span><span id="status-text">Ready</span></span>
+  <span class="logo">STX AI</span><span class="ver" data-i18n="header_ver">Agent</span>
+  <span class="spacer"></span>
+  <select id="header-lang" class="lang-select" onchange="changeLang(this.value)" aria-label="Language">
+    <option value="en">English</option>
+    <option value="zh-HK">繁體中文</option>
+    <option value="zh-CN">简体中文</option>
+  </select>
+  <button id="gear-btn" onclick="openSettings()" title="Settings" style="display:none;">⚙</button>
+  <span class="status"><span class="dot" id="status-dot"></span><span id="status-text" data-i18n="status_ready">Ready</span></span>
 </header>
 
 <!-- Chat -->
@@ -178,34 +233,73 @@ header .dot.off { background: var(--red); }
 <!-- Input -->
 <div id="input-area">
   <div id="quick-actions">
-    <button onclick="quickAction('analyze')" id="btn-analyze">📈 Analyze</button>
-    <button onclick="quickAction('signal')" id="btn-signal">⚡ Signal</button>
-    <button onclick="quickAction('news')" id="btn-news">📰 News</button>
-    <button onclick="quickAction('scan-us')" id="btn-scan-us">📊 US Scan</button>
-    <button onclick="quickAction('scan-hk')" id="btn-scan-hk">🇭🇰 HK Scan</button>
-    <button onclick="quickAction('clear')" id="btn-clear">🗑 Clear</button>
+    <button onclick="quickAction('analyze')" id="btn-analyze" data-i18n="btn_analyze">Analyze</button>
+    <button onclick="quickAction('signal')" id="btn-signal" data-i18n="btn_signal">Signal</button>
+    <button onclick="quickAction('news')" id="btn-news" data-i18n="btn_news">News</button>
+    <button onclick="quickAction('scan-us')" id="btn-scan-us" data-i18n="btn_scan_us">US Scan</button>
+    <button onclick="quickAction('scan-hk')" id="btn-scan-hk" data-i18n="btn_scan_hk">HK Scan</button>
+    <button onclick="quickAction('clear')" id="btn-clear" data-i18n="btn_clear">Clear</button>
   </div>
   <div id="input-row">
-    <input id="msg-input" placeholder="Enter a ticker or ask a question..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}">
-    <button id="send-btn" onclick="sendMessage()">Send</button>
+    <input id="msg-input" data-i18n-placeholder="input_placeholder" placeholder="Enter a ticker or ask a question..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}">
+    <button id="send-btn" onclick="sendMessage()" data-i18n="btn_send">Send</button>
   </div>
 </div>
 
 <!-- Setup Overlay -->
 <div id="setup-overlay">
   <div id="setup-box">
-    <h2>Welcome to STX AI</h2>
-    <p class="sub">Configure your agent to get started.</p>
-    <label>API Key</label>
+    <h2 data-i18n="setup_title">Welcome to STX AI</h2>
+    <p class="sub" data-i18n="setup_subtitle">Configure your agent to get started.</p>
+
+    <label data-i18n="setup_lang_label">Language / 語言</label>
+    <select id="setup-lang" onchange="updateSetupLang()">
+      <option value="en">English</option>
+      <option value="zh-HK">繁體中文</option>
+      <option value="zh-CN">简体中文</option>
+    </select>
+
+    <label data-i18n="setup_apikey_label">API Key</label>
     <input id="setup-apikey" placeholder="sk-..." autocomplete="off">
-    <p class="hint">Get your key at <a href="https://stxai.app/dashboard" target="_blank">stxai.app</a></p>
-    <label>Telegram Bot Token <span style="font-weight:400;text-transform:none;">(optional)</span></label>
+    <p class="hint"><span data-i18n="setup_apikey_hint_prefix">Get your key at</span> <a href="https://stxai.app/dashboard" target="_blank">stxai.app</a></p>
+
+    <label><span data-i18n="setup_tg_label">Telegram Bot Token</span> <span style="font-weight:400;text-transform:none;" data-i18n="setup_optional">(optional)</span></label>
     <input id="setup-token" placeholder="123:abc..." autocomplete="off">
-    <p class="hint">From <a href="https://t.me/BotFather" target="_blank">@BotFather</a> — skip if you only use Web UI</p>
+    <p class="hint"><span data-i18n="setup_tg_hint_prefix">From</span> <a href="https://t.me/BotFather" target="_blank">@BotFather</a> — <span data-i18n="setup_tg_hint_suffix">skip if you only use Web UI</span></p>
+
     <div id="setup-error"></div>
     <div id="setup-actions">
-      <button id="setup-skip" onclick="skipSetup()">Skip for now</button>
-      <button id="setup-save" onclick="saveSetup()">Save & Start</button>
+      <button id="setup-skip" onclick="skipSetup()" data-i18n="setup_skip">Skip for now</button>
+      <button id="setup-save" onclick="saveSetup()" data-i18n="setup_save">Save & Start</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Overlay -->
+<div id="settings-overlay">
+  <div id="settings-box">
+    <h2 data-i18n="settings_title">Settings</h2>
+    <p class="sub" data-i18n="settings_subtitle">Update your agent configuration.</p>
+
+    <label data-i18n="settings_lang_label">Language / 語言</label>
+    <select id="settings-lang">
+      <option value="en">English</option>
+      <option value="zh-HK">繁體中文</option>
+      <option value="zh-CN">简体中文</option>
+    </select>
+
+    <label data-i18n="settings_apikey_label">API Key</label>
+    <input id="settings-apikey" placeholder="sk-..." autocomplete="off">
+    <p class="hint"><span data-i18n="settings_apikey_hint">Get your key at</span> <a href="https://stxai.app/dashboard" target="_blank">stxai.app</a></p>
+
+    <label><span data-i18n="settings_tg_label">Telegram Bot Token</span> <span style="font-weight:400;text-transform:none;" data-i18n="setup_optional">(optional)</span></label>
+    <input id="settings-token" placeholder="123:abc..." autocomplete="off">
+    <p class="hint"><span data-i18n="settings_tg_hint_prefix">From</span> <a href="https://t.me/BotFather" target="_blank">@BotFather</a></p>
+
+    <div id="settings-error"></div>
+    <div id="settings-actions">
+      <button id="settings-close-btn" onclick="closeSettings()" data-i18n="settings_close">Cancel</button>
+      <button id="settings-save-btn" onclick="saveSettings()" data-i18n="settings_save">Save</button>
     </div>
   </div>
 </div>
@@ -213,8 +307,234 @@ header .dot.off { background: var(--red); }
 <div id="toast"></div>
 
 <script>
+// ── i18n ──
+const TRANSLATIONS = {
+  en: {
+    header_ver: "Agent",
+    status_ready: "Ready",
+    status_not_configured: "Not configured",
+    status_thinking: "Thinking...",
+    btn_analyze: "📈 Analyze",
+    btn_signal: "⚡ Signal",
+    btn_news: "📰 News",
+    btn_scan_us: "📊 US Scan",
+    btn_scan_hk: "🇭🇰 HK Scan",
+    btn_clear: "🗑 Clear",
+    btn_send: "Send",
+    input_placeholder: "Enter a ticker or ask a question...",
+    input_placeholder_analyze: "Enter stock ticker to analyze (e.g. AAPL, 0700.HK)...",
+    input_placeholder_signal: "Enter stock ticker for signal (e.g. AAPL, 0700.HK)...",
+    input_placeholder_news: "Enter stock ticker for news (e.g. AAPL, 0700.HK)...",
+    setup_title: "Welcome to STX AI",
+    setup_subtitle: "Configure your agent to get started.",
+    setup_lang_label: "Language / 語言",
+    setup_apikey_label: "API Key",
+    setup_apikey_hint_prefix: "Get your key at",
+    setup_tg_label: "Telegram Bot Token",
+    setup_optional: "(optional)",
+    setup_tg_hint_prefix: "From",
+    setup_tg_hint_suffix: "skip if you only use Web UI",
+    setup_save: "Save & Start",
+    setup_skip: "Skip for now",
+    setup_error_apikey_required: "API Key is required.",
+    setup_error_save_failed: "Failed to save configuration.",
+    welcome_message: "**Welcome to STX AI.**\n\nI'm your autonomous financial AI agent. Type a ticker (e.g. *AAPL*, *0700.HK*) or use the quick actions below.",
+    setup_complete_message: "✅ **Setup complete!**\n\nI'm ready to analyze stocks. Try typing a ticker or use the buttons below.",
+    analyze_mode_prompt: "🔬 **Analyze mode** — Enter a stock ticker below.",
+    signal_mode_prompt: "⚡ **Signal mode** — Enter a stock ticker below.",
+    news_mode_prompt: "📰 **News mode** — Enter a stock ticker below.",
+    no_news: "📭 No recent news for",
+    scan_header: "Market Scan",
+    network_error: "Network error:",
+    request_failed: "Request failed",
+    analysis_failed: "Analysis failed",
+    signal_failed: "Signal failed",
+    news_fetch_failed: "News fetch failed",
+    scan_failed: "Scan failed",
+    signal_card: "Signal Card",
+    not_advice: "Not trading advice. Directional signal only.",
+    settings_title: "Settings",
+    settings_subtitle: "Update your agent configuration.",
+    settings_lang_label: "Language / 語言",
+    settings_apikey_label: "API Key",
+    settings_apikey_hint: "Get your key at",
+    settings_tg_label: "Telegram Bot Token",
+    settings_close: "Cancel",
+    settings_save: "Save",
+    settings_saved: "Settings saved.",
+    settings_save_failed: "Failed to save settings.",
+    lang_changed: "Language updated.",
+    price_label: "Price"
+  },
+  "zh-HK": {
+    header_ver: "Agent",
+    status_ready: "就緒",
+    status_not_configured: "未設定",
+    status_thinking: "思考中...",
+    btn_analyze: "📈 分析",
+    btn_signal: "⚡ 信號",
+    btn_news: "📰 新聞",
+    btn_scan_us: "📊 美股掃描",
+    btn_scan_hk: "🇭🇰 港股掃描",
+    btn_clear: "🗑 清除",
+    btn_send: "發送",
+    input_placeholder: "輸入股票代號或提出問題...",
+    input_placeholder_analyze: "輸入要分析的股票代號（例如 AAPL, 0700.HK）...",
+    input_placeholder_signal: "輸入要獲取信號的股票代號（例如 AAPL, 0700.HK）...",
+    input_placeholder_news: "輸入要查詢新聞的股票代號（例如 AAPL, 0700.HK）...",
+    setup_title: "歡迎使用 STX AI",
+    setup_subtitle: "設定你的 AI Agent 以開始使用。",
+    setup_lang_label: "Language / 語言",
+    setup_apikey_label: "API 金鑰",
+    setup_apikey_hint_prefix: "在以下網址獲取金鑰",
+    setup_tg_label: "Telegram Bot Token",
+    setup_optional: "（可選）",
+    setup_tg_hint_prefix: "從",
+    setup_tg_hint_suffix: "如只使用 Web UI 可跳過",
+    setup_save: "儲存並開始",
+    setup_skip: "暫時跳過",
+    setup_error_apikey_required: "必須輸入 API 金鑰。",
+    setup_error_save_failed: "儲存設定失敗。",
+    welcome_message: "**歡迎使用 STX AI。**\n\n我係你嘅自主財經 AI Agent。輸入股票代號（例如 *AAPL*、*0700.HK*）或使用下面嘅快捷按鈕。",
+    setup_complete_message: "✅ **設定完成！**\n\n我已經準備好分析股票。試下輸入股票代號或者使用下面嘅按鈕。",
+    analyze_mode_prompt: "🔬 **分析模式** — 在下面輸入股票代號。",
+    signal_mode_prompt: "⚡ **信號模式** — 在下面輸入股票代號。",
+    news_mode_prompt: "📰 **新聞模式** — 在下面輸入股票代號。",
+    no_news: "📭 沒有相關新聞",
+    scan_header: "市場掃描",
+    network_error: "網絡錯誤：",
+    request_failed: "請求失敗",
+    analysis_failed: "分析失敗",
+    signal_failed: "信號獲取失敗",
+    news_fetch_failed: "新聞獲取失敗",
+    scan_failed: "掃描失敗",
+    signal_card: "信號卡",
+    not_advice: "⚠️ 非投資建議，僅為方向性信號。",
+    settings_title: "設定",
+    settings_subtitle: "更新你的 Agent 設定。",
+    settings_lang_label: "Language / 語言",
+    settings_apikey_label: "API 金鑰",
+    settings_apikey_hint: "在以下網址獲取金鑰",
+    settings_tg_label: "Telegram Bot Token",
+    settings_close: "取消",
+    settings_save: "儲存",
+    settings_saved: "設定已儲存。",
+    settings_save_failed: "儲存設定失敗。",
+    lang_changed: "語言已更新。",
+    price_label: "價格"
+  },
+  "zh-CN": {
+    header_ver: "Agent",
+    status_ready: "就绪",
+    status_not_configured: "未配置",
+    status_thinking: "思考中...",
+    btn_analyze: "📈 分析",
+    btn_signal: "⚡ 信号",
+    btn_news: "📰 新闻",
+    btn_scan_us: "📊 美股扫描",
+    btn_scan_hk: "🇭🇰 港股扫描",
+    btn_clear: "🗑 清除",
+    btn_send: "发送",
+    input_placeholder: "输入股票代码或提出问题...",
+    input_placeholder_analyze: "输入要分析的股票代码（例如 AAPL, 0700.HK）...",
+    input_placeholder_signal: "输入要获取信号的股票代码（例如 AAPL, 0700.HK）...",
+    input_placeholder_news: "输入要查询新闻的股票代码（例如 AAPL, 0700.HK）...",
+    setup_title: "欢迎使用 STX AI",
+    setup_subtitle: "配置你的 AI Agent 以开始使用。",
+    setup_lang_label: "Language / 语言",
+    setup_apikey_label: "API 密钥",
+    setup_apikey_hint_prefix: "在以下网址获取密钥",
+    setup_tg_label: "Telegram Bot Token",
+    setup_optional: "（可选）",
+    setup_tg_hint_prefix: "从",
+    setup_tg_hint_suffix: "如仅使用 Web UI 可跳过",
+    setup_save: "保存并开始",
+    setup_skip: "暂时跳过",
+    setup_error_apikey_required: "必须输入 API 密钥。",
+    setup_error_save_failed: "保存配置失败。",
+    welcome_message: "**欢迎使用 STX AI。**\n\n我是你的自主财经 AI Agent。输入股票代码（例如 *AAPL*、*0700.HK*）或使用下方的快捷按钮。",
+    setup_complete_message: "✅ **配置完成！**\n\n我已准备好分析股票。试试输入股票代码或使用下方的按钮。",
+    analyze_mode_prompt: "🔬 **分析模式** — 在下方输入股票代码。",
+    signal_mode_prompt: "⚡ **信号模式** — 在下方输入股票代码。",
+    news_mode_prompt: "📰 **新闻模式** — 在下方输入股票代码。",
+    no_news: "📭 没有相关新闻",
+    scan_header: "市场扫描",
+    network_error: "网络错误：",
+    request_failed: "请求失败",
+    analysis_failed: "分析失败",
+    signal_failed: "信号获取失败",
+    news_fetch_failed: "新闻获取失败",
+    scan_failed: "扫描失败",
+    signal_card: "信号卡",
+    not_advice: "⚠️ 非投资建议，仅为方向性信号。",
+    settings_title: "设置",
+    settings_subtitle: "更新你的 Agent 配置。",
+    settings_lang_label: "Language / 语言",
+    settings_apikey_label: "API 密钥",
+    settings_apikey_hint: "在以下网址获取密钥",
+    settings_tg_label: "Telegram Bot Token",
+    settings_close: "取消",
+    settings_save: "保存",
+    settings_saved: "设置已保存。",
+    settings_save_failed: "保存设置失败。",
+    lang_changed: "语言已更新。",
+    price_label: "价格"
+  }
+};
+
+const LOCALES = ['en', 'zh-HK', 'zh-CN'];
+let currentLang = 'en';
+
+function t(key) {
+  const m = TRANSLATIONS[currentLang];
+  if (m && m[key]) return m[key];
+  const en = TRANSLATIONS['en'];
+  if (en && en[key]) return en[key];
+  return key;
+}
+
+function applyTranslations() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    el.textContent = t(key);
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    el.placeholder = t(key);
+  });
+  // Update header lang select
+  const hl = document.getElementById('header-lang');
+  if (hl) hl.value = currentLang;
+  // Update setup lang select
+  const sl = document.getElementById('setup-lang');
+  if (sl) sl.value = currentLang;
+  // Update settings lang select
+  const stl = document.getElementById('settings-lang');
+  if (stl) stl.value = currentLang;
+}
+
+async function changeLang(lang) {
+  currentLang = lang;
+  applyTranslations();
+  // Persist to server
+  try {
+    await fetch('/api/config', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({lang: lang})
+    });
+    showToast(t('lang_changed'));
+  } catch(e) {}
+}
+
+function updateSetupLang() {
+  const sel = document.getElementById('setup-lang');
+  currentLang = sel.value;
+  applyTranslations();
+}
+
 // ── State ──
-let mode = '';        // '', 'analyze', 'signal', 'news'
+let mode = '';
 let configured = false;
 
 // ── Init ──
@@ -222,14 +542,17 @@ let configured = false;
   try {
     const r = await fetch('/api/config');
     const cfg = await r.json();
+    if (cfg.lang) {
+      currentLang = cfg.lang;
+    }
+    applyTranslations();
     if (cfg.configured) {
       configured = true;
       document.getElementById('setup-overlay').style.display = 'none';
-      addMsg('agent', '**Welcome to STX AI.**\n\nI\'m your autonomous financial AI agent. Type a ticker (e.g. *AAPL*, *0700.HK*) or use the quick actions below.');
+      document.getElementById('gear-btn').style.display = '';
+      addMsg('agent', t('welcome_message'));
     }
-  } catch(e) {
-    // Server not ready yet
-  }
+  } catch(e) {}
   updateStatus();
 })();
 
@@ -240,7 +563,7 @@ async function saveSetup() {
   const errEl = document.getElementById('setup-error');
 
   if (!apiKey) {
-    errEl.textContent = 'API Key is required.';
+    errEl.textContent = t('setup_error_apikey_required');
     errEl.style.display = 'block';
     return;
   }
@@ -250,15 +573,16 @@ async function saveSetup() {
     const r = await fetch('/api/config', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({api_key: apiKey, telegram_token: token})
+      body: JSON.stringify({api_key: apiKey, telegram_token: token, lang: currentLang})
     });
     if (!r.ok) {
       const e = await r.json();
-      throw new Error(e.error || 'Failed to save');
+      throw new Error(e.error || t('setup_error_save_failed'));
     }
     configured = true;
     document.getElementById('setup-overlay').style.display = 'none';
-    addMsg('agent', '✅ **Setup complete!**\n\nI\'m ready to analyze stocks. Try typing a ticker or use the buttons below.');
+    document.getElementById('gear-btn').style.display = '';
+    addMsg('agent', t('setup_complete_message'));
     updateStatus();
   } catch(e) {
     errEl.textContent = e.message;
@@ -270,13 +594,59 @@ async function skipSetup() {
   const r = await fetch('/api/config');
   const cfg = await r.json();
   if (!cfg.configured) {
-    document.getElementById('setup-error').textContent = 'API Key is required. You can set it up later by visiting /api/config or running stxai setup in terminal.';
+    document.getElementById('setup-error').textContent = t('setup_error_apikey_required');
     document.getElementById('setup-error').style.display = 'block';
     return;
   }
   configured = true;
   document.getElementById('setup-overlay').style.display = 'none';
+  document.getElementById('gear-btn').style.display = '';
   updateStatus();
+}
+
+// ── Settings ──
+async function openSettings() {
+  try {
+    const r = await fetch('/api/config');
+    const cfg = await r.json();
+    document.getElementById('settings-apikey').value = cfg.api_key || '';
+    document.getElementById('settings-token').value = cfg.telegram_token || '';
+    document.getElementById('settings-lang').value = currentLang;
+  } catch(e) {}
+  document.getElementById('settings-overlay').classList.add('show');
+  document.getElementById('settings-error').style.display = 'none';
+}
+
+function closeSettings() {
+  document.getElementById('settings-overlay').classList.remove('show');
+}
+
+async function saveSettings() {
+  const apiKey = document.getElementById('settings-apikey').value.trim();
+  const token = document.getElementById('settings-token').value.trim();
+  const lang = document.getElementById('settings-lang').value;
+  const errEl = document.getElementById('settings-error');
+
+  try {
+    const r = await fetch('/api/config', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({api_key: apiKey, telegram_token: token, lang: lang})
+    });
+    if (!r.ok) {
+      const e = await r.json();
+      throw new Error(e.error || t('settings_save_failed'));
+    }
+    if (lang !== currentLang) {
+      currentLang = lang;
+      applyTranslations();
+    }
+    closeSettings();
+    showToast(t('settings_saved'));
+  } catch(e) {
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+  }
 }
 
 // ── Quick Actions ──
@@ -288,37 +658,37 @@ function quickAction(action) {
     case 'analyze':
       mode = 'analyze';
       document.getElementById('btn-analyze').classList.add('active');
-      input.placeholder = 'Enter stock ticker to analyze (e.g. AAPL, 0700.HK)...';
+      input.placeholder = t('input_placeholder_analyze');
       input.focus();
-      addMsg('agent', '🔬 **Analyze mode** — Enter a stock ticker below.');
+      addMsg('agent', t('analyze_mode_prompt'));
       break;
     case 'signal':
       mode = 'signal';
       document.getElementById('btn-signal').classList.add('active');
-      input.placeholder = 'Enter stock ticker for signal (e.g. AAPL, 0700.HK)...';
+      input.placeholder = t('input_placeholder_signal');
       input.focus();
-      addMsg('agent', '⚡ **Signal mode** — Enter a stock ticker below.');
+      addMsg('agent', t('signal_mode_prompt'));
       break;
     case 'news':
       mode = 'news';
       document.getElementById('btn-news').classList.add('active');
-      input.placeholder = 'Enter stock ticker for news (e.g. AAPL, 0700.HK)...';
+      input.placeholder = t('input_placeholder_news');
       input.focus();
-      addMsg('agent', '📰 **News mode** — Enter a stock ticker below.');
+      addMsg('agent', t('news_mode_prompt'));
       break;
     case 'scan-us':
       mode = '';
-      input.placeholder = 'Enter a ticker or ask a question...';
+      input.placeholder = t('input_placeholder');
       runScan('us');
       break;
     case 'scan-hk':
       mode = '';
-      input.placeholder = 'Enter a ticker or ask a question...';
+      input.placeholder = t('input_placeholder');
       runScan('hk');
       break;
     case 'clear':
       mode = '';
-      input.placeholder = 'Enter a ticker or ask a question...';
+      input.placeholder = t('input_placeholder');
       document.getElementById('chat-area').innerHTML = '';
       fetch('/api/clear', {method:'POST'});
       break;
@@ -336,7 +706,7 @@ async function sendMessage() {
   if (!text || !configured) return;
 
   input.value = '';
-  input.placeholder = 'Enter a ticker or ask a question...';
+  input.placeholder = t('input_placeholder');
 
   const currentMode = mode;
   mode = '';
@@ -373,11 +743,11 @@ async function runChat(message) {
       }
       addMsg('agent', display);
     } else {
-      addMsg('agent', '❌ ' + (data.error || 'Request failed'));
+      addMsg('agent', '❌ ' + (data.error || t('request_failed')));
     }
   } catch(e) {
     hideTyping(typing);
-    addMsg('agent', '❌ Network error: ' + e.message);
+    addMsg('agent', '❌ ' + t('network_error') + ' ' + e.message);
   }
 }
 
@@ -396,11 +766,11 @@ async function runAnalyze(ticker) {
       }
       addMsg('agent', display);
     } else {
-      addMsg('agent', '❌ ' + (data.error || 'Analysis failed'));
+      addMsg('agent', '❌ ' + (data.error || t('analysis_failed')));
     }
   } catch(e) {
     hideTyping(typing);
-    addMsg('agent', '❌ Network error: ' + e.message);
+    addMsg('agent', '❌ ' + t('network_error') + ' ' + e.message);
   }
 }
 
@@ -412,7 +782,7 @@ async function runSignal(ticker) {
     hideTyping(typing);
     if (r.ok) {
       let display = '⚡ **' + escapeHtml(data.ticker || ticker) + ' Signal**\n\n';
-      if (data.price) display += 'Price: $' + data.price.toFixed(2) + '\n';
+      if (data.price) display += t('price_label') + ': $' + data.price.toFixed(2) + '\n';
       if (data.signal && data.signal.confidence_score > 0) {
         display += formatSignalInline(data.signal);
       } else {
@@ -420,11 +790,11 @@ async function runSignal(ticker) {
       }
       addMsg('agent', display);
     } else {
-      addMsg('agent', '❌ ' + (data.error || 'Signal failed'));
+      addMsg('agent', '❌ ' + (data.error || t('signal_failed')));
     }
   } catch(e) {
     hideTyping(typing);
-    addMsg('agent', '❌ Network error: ' + e.message);
+    addMsg('agent', '❌ ' + t('network_error') + ' ' + e.message);
   }
 }
 
@@ -436,7 +806,7 @@ async function runNews(ticker) {
     hideTyping(typing);
     if (r.ok) {
       if (!data.articles || data.articles.length === 0) {
-        addMsg('agent', '📭 No recent news for **' + escapeHtml(ticker) + '**.');
+        addMsg('agent', t('no_news') + ' **' + escapeHtml(ticker) + '**.');
       } else {
         let display = '📰 **' + escapeHtml(ticker.toUpperCase()) + ' News**\n';
         data.articles.slice(0,5).forEach(a => {
@@ -445,11 +815,11 @@ async function runNews(ticker) {
         addMsg('agent', display);
       }
     } else {
-      addMsg('agent', '❌ ' + (data.error || 'News fetch failed'));
+      addMsg('agent', '❌ ' + (data.error || t('news_fetch_failed')));
     }
   } catch(e) {
     hideTyping(typing);
-    addMsg('agent', '❌ Network error: ' + e.message);
+    addMsg('agent', '❌ ' + t('network_error') + ' ' + e.message);
   }
 }
 
@@ -465,13 +835,13 @@ async function runScan(market) {
     const data = await r.json();
     hideTyping(typing);
     if (r.ok) {
-      addMsg('agent', '📊 **' + marketName + ' Market Scan**\n\n' + (data.reply || 'No results.'));
+      addMsg('agent', '📊 **' + marketName + ' ' + t('scan_header') + '**\n\n' + (data.reply || 'No results.'));
     } else {
-      addMsg('agent', '❌ ' + (data.error || 'Scan failed'));
+      addMsg('agent', '❌ ' + (data.error || t('scan_failed')));
     }
   } catch(e) {
     hideTyping(typing);
-    addMsg('agent', '❌ Network error: ' + e.message);
+    addMsg('agent', '❌ ' + t('network_error') + ' ' + e.message);
   }
 }
 
@@ -509,10 +879,10 @@ function setStatus(state) {
   const txt = document.getElementById('status-text');
   if (state === 'thinking') {
     dot.className = 'dot'; dot.style.background = 'var(--yellow)';
-    txt.textContent = 'Thinking...';
+    txt.textContent = t('status_thinking');
   } else {
     dot.className = configured ? 'dot' : 'dot off';
-    txt.textContent = configured ? 'Ready' : 'Not configured';
+    txt.textContent = configured ? t('status_ready') : t('status_not_configured');
   }
 }
 
@@ -520,7 +890,7 @@ function updateStatus() {
   const dot = document.getElementById('status-dot');
   const txt = document.getElementById('status-text');
   dot.className = configured ? 'dot' : 'dot off';
-  txt.textContent = configured ? 'Ready' : 'Not configured';
+  txt.textContent = configured ? t('status_ready') : t('status_not_configured');
 }
 
 function formatSignalInline(s) {
@@ -542,9 +912,9 @@ function formatSignalInline(s) {
 
   return '<div class="signal-card ' + cls + '">' +
     '---\n' +
-    '📊 **Signal Card**\n' +
+    '📊 **' + t('signal_card') + '**\n' +
     emoji + ' **' + escapeHtml(s.directional_bias) + '** &nbsp;|&nbsp; Confidence: **' + s.confidence_score + '/100** &nbsp;|&nbsp; ' + bar + '\n' +
-    '⚠️ Not trading advice. Directional signal only.' +
+    '⚠️ ' + t('not_advice') +
     '</div>';
 }
 
@@ -552,29 +922,22 @@ function escapeHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// Simple markdown renderer
 function renderMarkdown(text) {
   let html = escapeHtml(text);
-  // Bold: **text**
   html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  // Italic: *text*
   html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-  // Inline code: `text`
   html = html.replace(/`(.+?)`/g, '<code style="background:#1a1d27;padding:1px 5px;border-radius:3px;font-size:13px;">$1</code>');
-  // Newlines
   html = html.replace(/\n/g, '<br>');
-  // Horizontal rule: ---
   html = html.replace(/---/g, '<hr style="border:none;border-top:1px solid var(--border);margin:8px 0">');
-  // Headers: ## text
   html = html.replace(/^## (.+)$/gm, '<h3 style="font-size:15px;color:#fff;margin:8px 0 4px;">$1</h3>');
   return html;
 }
 
-// ── Toast ──
-function showToast(msg) {
+function showToast(msg, isError) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
+  if (isError) t.classList.add('error'); else t.classList.remove('error');
+  setTimeout(() => { t.classList.remove('show'); t.classList.remove('error'); }, 3000);
 }
 </script>
 </body>
