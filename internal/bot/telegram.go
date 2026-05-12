@@ -73,7 +73,9 @@ func (b *Bot) btnScanUS() string  { return i18n.T("bot.btn_scan_us", b.lang) }
 func (b *Bot) btnScanHK() string  { return i18n.T("bot.btn_scan_hk", b.lang) }
 func (b *Bot) btnClear() string   { return i18n.T("bot.btn_clear", b.lang) }
 func (b *Bot) btnHelp() string    { return i18n.T("bot.btn_help", b.lang) }
-func (b *Bot) btnCancel() string  { return i18n.T("bot.btn_cancel", b.lang) }
+func (b *Bot) btnLang() string   { return i18n.T("bot.btn_lang", b.lang) }
+func (b *Bot) btnPair() string   { return i18n.T("bot.btn_pair", b.lang) }
+func (b *Bot) btnCancel() string { return i18n.T("bot.btn_cancel", b.lang) }
 
 // ── Mode management ──
 
@@ -127,6 +129,7 @@ func (b *Bot) mainKeyboard() *tele.ReplyMarkup {
 	m.ReplyKeyboard = [][]tele.ReplyButton{
 		{{Text: b.btnAnalyze()}, {Text: b.btnSignal()}, {Text: b.btnNews()}},
 		{{Text: b.btnScanUS()}, {Text: b.btnScanHK()}},
+		{{Text: b.btnLang()}, {Text: b.btnPair()}},
 		{{Text: b.btnClear()}, {Text: b.btnHelp()}},
 	}
 	return m
@@ -337,7 +340,31 @@ func (b *Bot) handleText(c tele.Context) error {
 	userID := c.Sender().ID
 	userLang := b.getUserLang(userID)
 
-	// 1. Check if it's a keyboard button press
+	// 1. Route slash commands that may arrive as plain text
+	if strings.HasPrefix(text, "/") {
+		switch {
+		case text == "/pair" || strings.HasPrefix(text, "/pair "):
+			return b.handlePair(c)
+		case text == "/lang" || strings.HasPrefix(text, "/lang "):
+			return b.handleLang(c)
+		case text == "/start" || strings.HasPrefix(text, "/start "):
+			return b.handleStart(c)
+		case text == "/help" || strings.HasPrefix(text, "/help "):
+			return b.handleHelp(c)
+		case text == "/clear" || strings.HasPrefix(text, "/clear "):
+			return b.handleClear(c)
+		case text == "/analyze" || strings.HasPrefix(text, "/analyze "):
+			return b.handleAnalyze(c)
+		case text == "/scan" || strings.HasPrefix(text, "/scan "):
+			return b.handleScan(c)
+		case text == "/news" || strings.HasPrefix(text, "/news "):
+			return b.handleNews(c)
+		case text == "/signal" || strings.HasPrefix(text, "/signal "):
+			return b.handleSignal(c)
+		}
+	}
+
+	// 2. Check if it's a keyboard button press
 	switch text {
 	case b.btnAnalyze():
 		return b.promptTicker(c, modeAnalyze, i18n.T("bot.prompt_analyze", userLang))
@@ -349,6 +376,10 @@ func (b *Bot) handleText(c tele.Context) error {
 		return b.runScan(c, "us")
 	case b.btnScanHK():
 		return b.runScan(c, "hk")
+	case b.btnLang():
+		return b.handleLang(c)
+	case b.btnPair():
+		return b.handlePair(c)
 	case b.btnClear():
 		return b.handleClear(c)
 	case b.btnHelp():
@@ -361,7 +392,7 @@ func (b *Bot) handleText(c tele.Context) error {
 		})
 	}
 
-	// 2. Check if user is in a mode (waiting for ticker input)
+	// 3. Check if user is in a mode (waiting for ticker input)
 	mode := b.getMode(userID)
 	switch mode {
 	case modeAnalyze:
@@ -372,7 +403,7 @@ func (b *Bot) handleText(c tele.Context) error {
 		return b.runNews(c, text)
 	}
 
-	// 3. Normal chat — send to cloud API
+	// 4. Normal chat — send to cloud API
 	return b.runChat(c, text)
 }
 
