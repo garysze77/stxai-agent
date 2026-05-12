@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/rand/v2"
 	"strings"
 	"sync"
 	"time"
@@ -291,25 +292,21 @@ func (b *Bot) handlePair(c tele.Context) error {
 		return b.denyAccess(c)
 	}
 	userLang := b.getUserLang(c.Sender().ID)
-	code := strings.TrimSpace(c.Message().Payload)
 
-	if code == "" {
-		return c.Send(i18n.T("bot.pair_usage", userLang), &tele.SendOptions{
-			ParseMode:   tele.ModeMarkdownV2,
-			ReplyMarkup: b.mainKeyboard(),
-		})
-	}
-
+	code := fmt.Sprintf("%06d", rand.IntN(1000000))
 	username := c.Sender().Username
-	err := b.client.PairComplete(code, c.Sender().ID, username)
+
+	err := b.client.PairRegister(code, c.Sender().ID, username)
 	if err != nil {
+		log.Printf("PairRegister failed: %v", err)
 		return c.Send("❌ "+escapeMD(err.Error()), &tele.SendOptions{
 			ParseMode:   tele.ModeMarkdownV2,
 			ReplyMarkup: b.mainKeyboard(),
 		})
 	}
 
-	return c.Send(i18n.T("bot.pair_success", userLang), &tele.SendOptions{
+	msg := fmt.Sprintf(i18n.T("bot.pair_success", userLang), code)
+	return c.Send(msg, &tele.SendOptions{
 		ParseMode:   tele.ModeMarkdownV2,
 		ReplyMarkup: b.mainKeyboard(),
 	})

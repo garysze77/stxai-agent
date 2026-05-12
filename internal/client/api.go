@@ -233,7 +233,7 @@ func (c *Client) Scan(market, criteria string) (*ChatResponse, error) {
 	return &ChatResponse{Reply: result.Results}, nil
 }
 
-func (c *Client) PairComplete(code string, telegramUserID int64, telegramUsername string) error {
+func (c *Client) PairRegister(code string, telegramUserID int64, telegramUsername string) error {
 	body := map[string]any{
 		"code":              code,
 		"telegram_user_id":  telegramUserID,
@@ -241,7 +241,7 @@ func (c *Client) PairComplete(code string, telegramUserID int64, telegramUsernam
 	}
 	b, _ := json.Marshal(body)
 
-	req, err := http.NewRequest("POST", c.BaseURL+"/pairing/complete", bytes.NewReader(b))
+	req, err := http.NewRequest("POST", c.BaseURL+"/pairing/register", bytes.NewReader(b))
 	if err != nil {
 		return err
 	}
