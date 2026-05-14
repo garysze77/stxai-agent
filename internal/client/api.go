@@ -138,7 +138,7 @@ func (c *Client) Chat(message, session, lang string, deep bool) (*ChatResponse, 
 	return &cr, nil
 }
 
-func (c *Client) ChatStream(message, session, lang string, deep bool, onChunk func(string)) error {
+func (c *Client) ChatStream(message, session, lang string, deep bool, onChunk func(ChatResponse)) error {
 	body := ChatRequest{Message: message, Session: session, DeepAnalysis: deep}
 	b, _ := json.Marshal(body)
 
@@ -156,6 +156,16 @@ func (c *Client) ChatStream(message, session, lang string, deep bool, onChunk fu
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode == 429 {
+		return fmt.Errorf("daily quota exceeded")
+	}
+	if resp.StatusCode == 401 {
+		return fmt.Errorf("invalid API key — run: stxai setup")
+	}
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("%s", readError(resp))
+	}
+
 	scanner := bufio.NewScanner(resp.Body)
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -166,7 +176,7 @@ func (c *Client) ChatStream(message, session, lang string, deep bool, onChunk fu
 			}
 			var chunk ChatResponse
 			if err := json.Unmarshal([]byte(data), &chunk); err == nil {
-				onChunk(chunk.Reply)
+				onChunk(chunk)
 			}
 		}
 	}

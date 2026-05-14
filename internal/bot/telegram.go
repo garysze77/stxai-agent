@@ -528,24 +528,70 @@ func (b *Bot) runChat(c tele.Context, message string) error {
 	sessionID := fmt.Sprintf("tg:%d", c.Sender().ID)
 	lang := b.langFor(c)
 
-	c.Notify(tele.Typing)
-
 	b.store.SaveMessage(sessionID, "user", message)
 
-	resp, err := b.client.Chat(message, sessionID, lang, false)
+	// Send placeholder that we'll progressively update
+	placeholder, err := b.tg.Send(c.Recipient(), "...", &tele.SendOptions{
+		ReplyMarkup: b.mainKeyboard(),
+	})
 	if err != nil {
-		return c.Send("❌ "+escapeMD(err.Error()),
-			&tele.SendOptions{ParseMode: tele.ModeMarkdownV2, ReplyMarkup: b.mainKeyboard()})
+		return err
 	}
 
-	b.store.SaveMessage(sessionID, "assistant", resp.Reply)
+	c.Notify(tele.Typing)
 
-	display := resp.Reply
-	if resp.Signal != nil && resp.Signal.ConfidenceScore > 0 {
-		display += b.formatSignalInline(resp.Signal, lang)
+	var fullReply string
+	var signal *client.SignalData
+	var lastEdit time.Time
+	var editErr error
+
+	streamErr := b.client.ChatStream(message, sessionID, lang, false, func(chunk client.ChatResponse) {
+		fullReply += chunk.Reply
+
+		if chunk.Signal != nil && chunk.Signal.ConfidenceScore > 0 {
+			signal = chunk.Signal
+		}
+
+		// Throttle edits to ~500ms to stay under Telegram rate limits
+		if time.Since(lastEdit) > 500*time.Millisecond {
+			display := fullReply
+			if signal != nil {
+				display += b.formatSignalInline(signal, lang)
+			}
+			_, editErr = b.tg.Edit(placeholder, display, &tele.SendOptions{
+				ParseMode: tele.ModeMarkdownV2,
+			})
+			if editErr != nil {
+				return
+			}
+			lastEdit = time.Now()
+			c.Notify(tele.Typing)
+		}
+	})
+
+	// If the streaming callback encountered an edit error, surface it
+	if editErr != nil {
+		return editErr
 	}
 
-	return b.sendLongMessage(c, display, b.mainKeyboard())
+	if streamErr != nil {
+		b.tg.Edit(placeholder, "❌ "+escapeMD(streamErr.Error()),
+			&tele.SendOptions{ParseMode: tele.ModeMarkdownV2})
+		return nil
+	}
+
+	b.store.SaveMessage(sessionID, "assistant", fullReply)
+
+	// Final edit with complete response + signal
+	display := fullReply
+	if signal != nil && signal.ConfidenceScore > 0 {
+		display += "\n" + b.formatSignalInline(signal, lang)
+	}
+
+	_, err = b.tg.Edit(placeholder, display, &tele.SendOptions{
+		ParseMode: tele.ModeMarkdownV2,
+	})
+	return err
 }
 
 // ── Formatting helpers ──
