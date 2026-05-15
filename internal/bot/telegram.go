@@ -462,10 +462,19 @@ func (b *Bot) formatSignalInline(s *client.SignalData) string {
 // ── Utilities ──
 
 func (b *Bot) sendLongMessage(c tele.Context, text string, kb *tele.ReplyMarkup) error {
-	opts := &tele.SendOptions{
-		ParseMode:   tele.ModeMarkdownV2,
-		ReplyMarkup: kb,
+	if text == "" {
+		text = "No response generated."
 	}
+	// Try MarkdownV2 first; fall back to plain text on any parse error.
+	if err := b.sendChunks(c, text, kb, tele.ModeMarkdownV2); err != nil {
+		log.Printf("MarkdownV2 send failed, retrying as plain text: %v", err)
+		return b.sendChunks(c, text, kb, "")
+	}
+	return nil
+}
+
+// sendChunks splits long text and sends with the given parse mode.
+func (b *Bot) sendChunks(c tele.Context, text string, kb *tele.ReplyMarkup, parseMode string) error {
 	const maxLen = 4000
 	for i := 0; i < len(text); i += maxLen {
 		end := i + maxLen
@@ -474,12 +483,9 @@ func (b *Bot) sendLongMessage(c tele.Context, text string, kb *tele.ReplyMarkup)
 		}
 		var err error
 		if i == 0 {
-			err = c.Send(text[i:end], opts)
+			err = c.Send(text[i:end], &tele.SendOptions{ParseMode: parseMode, ReplyMarkup: kb})
 		} else {
-			// Subsequent chunks: no keyboard to avoid dupes
-			_, err = b.tg.Send(c.Recipient(), text[i:end], &tele.SendOptions{
-				ParseMode: tele.ModeMarkdownV2,
-			})
+			_, err = b.tg.Send(c.Recipient(), text[i:end], &tele.SendOptions{ParseMode: parseMode})
 		}
 		if err != nil {
 			return err
@@ -498,6 +504,7 @@ func cleanTicker(s string) string {
 
 func escapeMD(s string) string {
 	replacer := strings.NewReplacer(
+		"\\", "\\\\",
 		"_", "\\_",
 		"*", "\\*",
 		"[", "\\[",
