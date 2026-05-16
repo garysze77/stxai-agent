@@ -87,6 +87,62 @@ type NewsResponse struct {
 	} `json:"articles"`
 }
 
+type PortfolioPosition struct {
+	Ticker       string  `json:"ticker"`
+	Shares       float64 `json:"shares"`
+	CostBasis    float64 `json:"cost_basis"`
+	CurrentPrice float64 `json:"current_price"`
+	CostTotal    float64 `json:"cost_total"`
+	Value        float64 `json:"value"`
+	Pnl          float64 `json:"pnl"`
+	PnlPct       float64 `json:"pnl_pct"`
+}
+
+type PortfolioResponse struct {
+	Positions   []PortfolioPosition `json:"positions"`
+	TotalValue  float64             `json:"total_value"`
+	TotalCost   float64             `json:"total_cost"`
+	TotalPnl    float64             `json:"total_pnl"`
+	TotalPnlPct float64             `json:"total_pnl_pct"`
+}
+
+type Alert struct {
+	ID        string  `json:"id"`
+	Ticker    string  `json:"ticker"`
+	Condition string  `json:"condition"`
+	Price     float64 `json:"price"`
+	Triggered bool    `json:"triggered"`
+}
+
+type Autorule struct {
+	ID              string  `json:"id"`
+	Ticker          string  `json:"ticker"`
+	Condition       string  `json:"condition"`
+	Threshold       float64 `json:"threshold"`
+	Enabled         bool    `json:"enabled"`
+	LastTriggeredAt int64   `json:"last_triggered_at"`
+}
+
+type EarningsResponse struct {
+	Ticker          string  `json:"ticker"`
+	Market          string  `json:"market"`
+	EarningsDate    string  `json:"earnings_date"`
+	EpsEstimate     float64 `json:"eps_estimate"`
+	RevenueEstimate float64 `json:"revenue_estimate"`
+	EarningsGrowth  float64 `json:"earnings_growth"`
+	RevenueGrowth   float64 `json:"revenue_growth"`
+	Source          string  `json:"source"`
+}
+
+type CompareRequest struct {
+	Tickers string `json:"tickers"`
+}
+
+type CompareResponse struct {
+	Tickers    string `json:"tickers"`
+	Comparison string `json:"comparison"`
+}
+
 // ── Helpers ──
 
 type errDetail struct {
@@ -293,6 +349,366 @@ func (c *Client) PairClaim(code string, telegramUserID int64, telegramUsername s
 	return nil
 }
 
+func (c *Client) Portfolio() (*PortfolioResponse, error) {
+	req, err := http.NewRequest("GET", c.BaseURL+"/portfolio", nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+c.APIKey)
+
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == 429 {
+		return nil, fmt.Errorf("daily quota exceeded — upgrade at https://stxai.app")
+	}
+	if resp.StatusCode == 401 {
+		return nil, fmt.Errorf("invalid API key — run: stxai setup")
+	}
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("%s", readError(resp))
+	}
+
+	var pr PortfolioResponse
+	if err := json.NewDecoder(resp.Body).Decode(&pr); err != nil {
+		return nil, err
+	}
+	return &pr, nil
+}
+
+func (c *Client) AddPosition(ticker string, shares, costBasis float64) error {
+	body := map[string]any{
+		"ticker":     ticker,
+		"shares":     shares,
+		"cost_basis": costBasis,
+	}
+	b, _ := json.Marshal(body)
+
+	req, err := http.NewRequest("POST", c.BaseURL+"/portfolio", bytes.NewReader(b))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+c.APIKey)
+
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == 429 {
+		return fmt.Errorf("daily quota exceeded — upgrade at https://stxai.app")
+	}
+	if resp.StatusCode == 401 {
+		return fmt.Errorf("invalid API key — run: stxai setup")
+	}
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("%s", readError(resp))
+	}
+	return nil
+}
+
+func (c *Client) RemovePosition(ticker string) error {
+	req, err := http.NewRequest("DELETE", c.BaseURL+"/portfolio/"+ticker, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", "Bearer "+c.APIKey)
+
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == 429 {
+		return fmt.Errorf("daily quota exceeded — upgrade at https://stxai.app")
+	}
+	if resp.StatusCode == 401 {
+		return fmt.Errorf("invalid API key — run: stxai setup")
+	}
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("%s", readError(resp))
+	}
+	return nil
+}
+
+func (c *Client) Earnings(ticker string) (*EarningsResponse, error) {
+	req, err := http.NewRequest("GET", c.BaseURL+"/earnings/"+ticker, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+c.APIKey)
+
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == 429 {
+		return nil, fmt.Errorf("daily quota exceeded — upgrade at https://stxai.app")
+	}
+	if resp.StatusCode == 401 {
+		return nil, fmt.Errorf("invalid API key — run: stxai setup")
+	}
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("%s", readError(resp))
+	}
+
+	var er EarningsResponse
+	if err := json.NewDecoder(resp.Body).Decode(&er); err != nil {
+		return nil, err
+	}
+	return &er, nil
+}
+
+func (c *Client) Compare(tickers string) (*CompareResponse, error) {
+	body := CompareRequest{Tickers: tickers}
+	b, _ := json.Marshal(body)
+
+	req, err := http.NewRequest("POST", c.BaseURL+"/compare", bytes.NewReader(b))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+c.APIKey)
+
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == 429 {
+		return nil, fmt.Errorf("daily quota exceeded — upgrade at https://stxai.app")
+	}
+	if resp.StatusCode == 401 {
+		return nil, fmt.Errorf("invalid API key — run: stxai setup")
+	}
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("%s", readError(resp))
+	}
+
+	var cr CompareResponse
+	if err := json.NewDecoder(resp.Body).Decode(&cr); err != nil {
+		return nil, err
+	}
+	return &cr, nil
+}
+
+func (c *Client) GetAlerts() ([]Alert, error) {
+	req, err := http.NewRequest("GET", c.BaseURL+"/alerts", nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+c.APIKey)
+
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == 429 {
+		return nil, fmt.Errorf("daily quota exceeded — upgrade at https://stxai.app")
+	}
+	if resp.StatusCode == 401 {
+		return nil, fmt.Errorf("invalid API key — run: stxai setup")
+	}
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("%s", readError(resp))
+	}
+
+	var result struct {
+		Alerts []Alert `json:"alerts"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, err
+	}
+	return result.Alerts, nil
+}
+
+func (c *Client) CreateAlert(ticker, condition string, price float64) error {
+	body := map[string]any{
+		"ticker":    ticker,
+		"condition": condition,
+		"price":     price,
+	}
+	b, _ := json.Marshal(body)
+
+	req, err := http.NewRequest("POST", c.BaseURL+"/alerts", bytes.NewReader(b))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+c.APIKey)
+
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == 429 {
+		return fmt.Errorf("daily quota exceeded — upgrade at https://stxai.app")
+	}
+	if resp.StatusCode == 401 {
+		return fmt.Errorf("invalid API key — run: stxai setup")
+	}
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("%s", readError(resp))
+	}
+	return nil
+}
+
+func (c *Client) DeleteAlert(alertID string) error {
+	req, err := http.NewRequest("DELETE", c.BaseURL+"/alerts/"+alertID, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", "Bearer "+c.APIKey)
+
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == 429 {
+		return fmt.Errorf("daily quota exceeded — upgrade at https://stxai.app")
+	}
+	if resp.StatusCode == 401 {
+		return fmt.Errorf("invalid API key — run: stxai setup")
+	}
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("%s", readError(resp))
+	}
+	return nil
+}
+
+func (c *Client) GetAutorules() ([]Autorule, error) {
+	req, err := http.NewRequest("GET", c.BaseURL+"/autorules", nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+c.APIKey)
+
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == 429 {
+		return nil, fmt.Errorf("daily quota exceeded — upgrade at https://stxai.app")
+	}
+	if resp.StatusCode == 401 {
+		return nil, fmt.Errorf("invalid API key — run: stxai setup")
+	}
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("%s", readError(resp))
+	}
+
+	var result struct {
+		Rules []Autorule `json:"rules"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, err
+	}
+	return result.Rules, nil
+}
+
+func (c *Client) CreateAutorule(ticker, condition string, threshold float64) error {
+	body := map[string]any{
+		"ticker":    ticker,
+		"condition": condition,
+		"threshold": threshold,
+	}
+	b, _ := json.Marshal(body)
+
+	req, err := http.NewRequest("POST", c.BaseURL+"/autorules", bytes.NewReader(b))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+c.APIKey)
+
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == 429 {
+		return fmt.Errorf("daily quota exceeded — upgrade at https://stxai.app")
+	}
+	if resp.StatusCode == 401 {
+		return fmt.Errorf("invalid API key — run: stxai setup")
+	}
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("%s", readError(resp))
+	}
+	return nil
+}
+
+func (c *Client) DeleteAutorule(ruleID string) error {
+	req, err := http.NewRequest("DELETE", c.BaseURL+"/autorules/"+ruleID, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", "Bearer "+c.APIKey)
+
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == 429 {
+		return fmt.Errorf("daily quota exceeded — upgrade at https://stxai.app")
+	}
+	if resp.StatusCode == 401 {
+		return fmt.Errorf("invalid API key — run: stxai setup")
+	}
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("%s", readError(resp))
+	}
+	return nil
+}
+
+func (c *Client) UpdateSettings(settings map[string]any) error {
+	b, _ := json.Marshal(settings)
+
+	req, err := http.NewRequest("POST", c.BaseURL+"/user/settings", bytes.NewReader(b))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+c.APIKey)
+
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == 429 {
+		return fmt.Errorf("daily quota exceeded — upgrade at https://stxai.app")
+	}
+	if resp.StatusCode == 401 {
+		return fmt.Errorf("invalid API key — run: stxai setup")
+	}
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("%s", readError(resp))
+	}
+	return nil
+}
+
 func (c *Client) News(ticker, lang string) (*NewsResponse, error) {
 	url := c.BaseURL + "/news/" + ticker + langQ(lang)
 	req, err := http.NewRequest("GET", url, nil)
@@ -317,3 +733,4 @@ func (c *Client) News(ticker, lang string) (*NewsResponse, error) {
 	}
 	return &nr, nil
 }
+
