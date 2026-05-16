@@ -42,6 +42,8 @@ func ShowNodeHeader(node string, lang string) {
 		leadColor.Printf("\n  ── %s ──\n\n", i18n.T("cli.display.synthesis", lang))
 	case strings.Contains(node, "signal"):
 		signalColor.Printf("\n  ── %s ──\n\n", i18n.T("cli.display.signal", lang))
+	case strings.Contains(node, "fast_analysis"):
+		leadColor.Printf("\n  ── %s ──\n\n", i18n.T("cli.display.quick_analysis", lang))
 	default:
 		dimColor.Printf("\n  ── %s ──\n\n", node)
 	}
