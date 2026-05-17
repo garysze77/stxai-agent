@@ -15,7 +15,7 @@
       type="text"
       id="ticker-input"
       class="ticker-input"
-      placeholder="Enter ticker (AAPL, TSLA, 0700…)"
+      placeholder="AAPL, TSLA, 0700…"
       autocomplete="off"
       spellcheck="false"
     >
@@ -29,11 +29,10 @@
 </header>
 
 <main class="dashboard" id="dashboard">
-  <!-- Welcome state -->
   <div class="welcome" id="welcome">
-    <div class="welcome-icon">📊</div>
-    <h2>Welcome to STX AI</h2>
-    <p>Enter a stock ticker above to see real-time data.</p>
+    <div class="welcome-icon">&#128202;</div>
+    <h2 data-i18n="welcome_title">Welcome to STX AI</h2>
+    <p data-i18n="welcome_subtitle">Enter a stock ticker above to see real-time data.</p>
     <div class="quick-tickers">
       <button class="quick-ticker" data-ticker="AAPL">AAPL</button>
       <button class="quick-ticker" data-ticker="TSLA">TSLA</button>
@@ -43,48 +42,44 @@
     </div>
   </div>
 
-  <!-- Data cards (hidden until search) -->
   <div class="cards" id="cards" style="display:none">
-    <!-- Row 1: KPI cards -->
     <div class="card" id="card-price">
-      <div class="card-label">Price</div>
+      <div class="card-label" data-i18n="card_price">Price</div>
       <div class="card-value price-value" id="price-value">—</div>
       <div class="card-sub" id="price-name"></div>
     </div>
     <div class="card" id="card-rsi">
-      <div class="card-label">RSI (14)</div>
+      <div class="card-label" data-i18n="card_rsi">RSI (14)</div>
       <div class="card-value" id="rsi-value">—</div>
       <div class="card-sub" id="rsi-zone"></div>
     </div>
     <div class="card" id="card-macd">
-      <div class="card-label">MACD</div>
+      <div class="card-label" data-i18n="card_macd">MACD</div>
       <div class="card-value" id="macd-value">—</div>
       <div class="card-sub" id="macd-sub"></div>
     </div>
     <div class="card" id="card-ma">
-      <div class="card-label">Moving Averages</div>
-      <div class="card-ma-row"><span class="ma-label">MA50</span><span id="ma50-value">—</span></div>
-      <div class="card-ma-row"><span class="ma-label">MA200</span><span id="ma200-value">—</span></div>
+      <div class="card-label" data-i18n="card_ma">Moving Averages</div>
+      <div class="card-ma-row"><span class="ma-label" data-i18n="card_ma50">MA50</span><span id="ma50-value">—</span></div>
+      <div class="card-ma-row"><span class="ma-label" data-i18n="card_ma200">MA200</span><span id="ma200-value">—</span></div>
       <div class="card-sub" id="ma-relation"></div>
     </div>
 
-    <!-- Row 2: Patterns + Bollinger -->
     <div class="card card-wide" id="card-patterns">
-      <div class="card-label">Patterns</div>
+      <div class="card-label" data-i18n="card_patterns">Patterns</div>
       <div class="patterns-list" id="patterns-list">
         <span class="muted">No patterns detected</span>
       </div>
     </div>
     <div class="card" id="card-bb">
-      <div class="card-label">Bollinger Bands</div>
-      <div class="card-ma-row"><span class="ma-label">Upper</span><span id="bb-upper">—</span></div>
-      <div class="card-ma-row"><span class="ma-label">Middle</span><span id="bb-middle">—</span></div>
-      <div class="card-ma-row"><span class="ma-label">Lower</span><span id="bb-lower">—</span></div>
+      <div class="card-label" data-i18n="card_bb">Bollinger Bands</div>
+      <div class="card-ma-row"><span class="ma-label" data-i18n="card_bb_upper">Upper</span><span id="bb-upper">—</span></div>
+      <div class="card-ma-row"><span class="ma-label" data-i18n="card_bb_middle">Middle</span><span id="bb-middle">—</span></div>
+      <div class="card-ma-row"><span class="ma-label" data-i18n="card_bb_lower">Lower</span><span id="bb-lower">—</span></div>
     </div>
 
-    <!-- Row 3: News -->
     <div class="card card-full" id="card-news">
-      <div class="card-label">News</div>
+      <div class="card-label" data-i18n="card_news">News</div>
       <div class="news-list" id="news-list">
         <span class="muted">Loading news…</span>
       </div>
@@ -99,15 +94,16 @@
       type="text"
       id="chat-input"
       class="chat-input"
+      data-i18n-placeholder="chat_placeholder"
       placeholder="Ask anything about this stock…"
       autocomplete="off"
     >
-    <button type="submit" class="chat-send">Send</button>
+    <button type="submit" class="chat-send" data-i18n="chat_send">Send</button>
   </form>
 </section>
 
 <footer class="statusbar" id="statusbar">
-  <span id="status-text">Ready — enter a ticker to begin</span>
+  <span id="status-text" data-i18n="status_ready">Ready — enter a ticker to begin</span>
 </footer>
 
 <script src="/app.js"></script>
