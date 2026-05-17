@@ -3,10 +3,11 @@
     "usage": {
       "header": "STX AI — 金融 AI 代理 CLI",
       "desc": "用法：",
-      "price": "stx price <股票代码>          快速价格查询",
-      "analyze": "stx analyze <股票代码>         流式深度分析",
-      "analyze_fast": "stx analyze <股票代码> --fast  快速模式（45 秒超时）",
-      "configure": "stx configure                 设置 API URL 及 API 密钥",
+      "price": "stxai price <股票代码>          快速价格查询",
+      "analyze": "stxai analyze <股票代码>         流式深度分析",
+      "analyze_fast": "stxai analyze <股票代码> --fast  快速模式（45 秒超时）",
+      "serve": "stxai serve [--port N]          启动本地网页仪表板",
+      "configure": "stxai configure                 设置 API URL 及 API 密钥",
       "examples": "示例：",
       "config_header": "配置：",
       "env_url": "STX_API_URL   API 基础 URL（默认：http://localhost:8000）",
@@ -14,9 +15,9 @@
     },
     "errors": {
       "load_config": "加载配置时出错：%v",
-      "usage_price": "用法：stx price <股票代码>",
-      "usage_analyze": "用法：stx analyze <股票代码> [--fast]",
-      "missing_key": "错误：未设置 STX_API_KEY。请先执行 'stx configure'。",
+      "usage_price": "用法：stxai price <股票代码>",
+      "usage_analyze": "用法：stxai analyze <股票代码> [--fast]",
+      "missing_key": "错误：未设置 STX_API_KEY。请先执行 'stxai configure'。",
       "command_error": "错误：%v",
       "price_failed": "价格查询失败：%w",
       "stream_error": "流式错误：%w",
@@ -29,6 +30,10 @@
       "api_key_required": "需要 API 密钥",
       "save_failed": "无法保存配置：%w",
       "saved": "  配置已保存至 ~/.stx/config.json"
+    },
+    "setup": {
+      "welcome": "欢迎！STX AI 需要你的 API 密钥才能开始使用。",
+      "get_key": "在 https://stxai.com/dashboard 获取你的 API 密钥，然后运行："
     },
     "display": {
       "bull_case": "看涨观点",

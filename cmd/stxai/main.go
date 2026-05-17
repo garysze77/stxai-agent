@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/garysze77/stxai-agent/internal/commands"
 	"github.com/garysze77/stxai-agent/internal/config"
@@ -21,8 +22,17 @@ func main() {
 		lang = "en"
 	}
 
+	// No args → start web dashboard (if configured) or show setup guide
 	if len(os.Args) < 2 {
-		printUsage(lang)
+		if cfg.APIKey != "" {
+			port := 8420
+			if err := commands.ServeCommand(cfg, port, lang); err != nil {
+				fmt.Fprintf(os.Stderr, i18n.T("cli.errors.command_error", lang, err))
+				os.Exit(1)
+			}
+			return
+		}
+		printSetup(lang)
 		os.Exit(1)
 	}
 
@@ -58,8 +68,26 @@ func main() {
 			os.Exit(1)
 		}
 
-	case "configure":
+	case "configure", "setup":
 		if err := commands.ConfigureCommand(lang); err != nil {
+			fmt.Fprintf(os.Stderr, i18n.T("cli.errors.command_error", lang, err))
+			os.Exit(1)
+		}
+
+	case "serve":
+		port := 8420
+		for i, a := range os.Args[2:] {
+			if a == "--port" && i+1 < len(os.Args)-2 {
+				if p, err := strconv.Atoi(os.Args[i+3]); err == nil && p > 0 && p < 65536 {
+					port = p
+				}
+			}
+		}
+		if cfg.APIKey == "" {
+			fmt.Fprintln(os.Stderr, i18n.T("cli.errors.missing_key", lang))
+			os.Exit(1)
+		}
+		if err := commands.ServeCommand(cfg, port, lang); err != nil {
 			fmt.Fprintf(os.Stderr, i18n.T("cli.errors.command_error", lang, err))
 			os.Exit(1)
 		}
@@ -70,6 +98,20 @@ func main() {
 	}
 }
 
+func printSetup(lang string) {
+	fmt.Println(i18n.T("cli.usage.header", lang))
+	fmt.Println()
+	fmt.Println(i18n.T("cli.setup.welcome", lang))
+	fmt.Println()
+	fmt.Println("  stxai configure")
+	fmt.Println()
+	fmt.Println(i18n.T("cli.setup.get_key", lang))
+	fmt.Println()
+	fmt.Println(i18n.T("cli.usage.config_header", lang))
+	fmt.Println("  " + i18n.T("cli.usage.env_url", lang))
+	fmt.Println("  " + i18n.T("cli.usage.env_key", lang))
+}
+
 func printUsage(lang string) {
 	fmt.Println(i18n.T("cli.usage.header", lang))
 	fmt.Println()
@@ -77,12 +119,13 @@ func printUsage(lang string) {
 	fmt.Println("  " + i18n.T("cli.usage.price", lang))
 	fmt.Println("  " + i18n.T("cli.usage.analyze", lang))
 	fmt.Println("  " + i18n.T("cli.usage.analyze_fast", lang))
+	fmt.Println("  " + i18n.T("cli.usage.serve", lang))
 	fmt.Println("  " + i18n.T("cli.usage.configure", lang))
 	fmt.Println()
 	fmt.Println(i18n.T("cli.usage.examples", lang))
-	fmt.Println("  stx price AAPL")
-	fmt.Println("  stx analyze TSLA")
-	fmt.Println("  stx analyze 0700 --fast")
+	fmt.Println("  stxai price AAPL")
+	fmt.Println("  stxai analyze TSLA")
+	fmt.Println("  stxai analyze 0700 --fast")
 	fmt.Println()
 	fmt.Println(i18n.T("cli.usage.config_header", lang))
 	fmt.Println("  " + i18n.T("cli.usage.env_url", lang))

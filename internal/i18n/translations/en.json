@@ -3,10 +3,11 @@
     "usage": {
       "header": "STX AI — Financial AI Agent CLI",
       "desc": "Usage:",
-      "price": "stx price <TICKER>          Quick price lookup",
-      "analyze": "stx analyze <TICKER>         Streaming deep analysis",
-      "analyze_fast": "stx analyze <TICKER> --fast  Fast mode (45s timeout)",
-      "configure": "stx configure                Set API URL and API key",
+      "price": "stxai price <TICKER>          Quick price lookup",
+      "analyze": "stxai analyze <TICKER>         Streaming deep analysis",
+      "analyze_fast": "stxai analyze <TICKER> --fast  Fast mode (45s timeout)",
+      "serve": "stxai serve [--port N]          Start local web dashboard",
+      "configure": "stxai configure                Set API URL and API key",
       "examples": "Examples:",
       "config_header": "Config:",
       "env_url": "STX_API_URL   API base URL (default: http://localhost:8000)",
@@ -14,9 +15,9 @@
     },
     "errors": {
       "load_config": "Error loading config: %v",
-      "usage_price": "Usage: stx price <TICKER>",
-      "usage_analyze": "Usage: stx analyze <TICKER> [--fast]",
-      "missing_key": "Error: STX_API_KEY not set. Run 'stx configure' first.",
+      "usage_price": "Usage: stxai price <TICKER>",
+      "usage_analyze": "Usage: stxai analyze <TICKER> [--fast]",
+      "missing_key": "Error: STX_API_KEY not set. Run 'stxai configure' first.",
       "command_error": "Error: %v",
       "price_failed": "price lookup failed: %w",
       "stream_error": "stream error: %w",
@@ -29,6 +30,10 @@
       "api_key_required": "API key is required",
       "save_failed": "failed to save config: %w",
       "saved": "  Config saved to ~/.stx/config.json"
+    },
+    "setup": {
+      "welcome": "Welcome! STX AI needs your API key to get started.",
+      "get_key": "Get your API key at https://stxai.com/dashboard, then run:"
     },
     "display": {
       "bull_case": "Bull Case",

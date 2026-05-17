@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STX AI — Dashboard</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <span class="logo">STX AI</span>
+  <form class="ticker-form" id="ticker-form">
+    <input
+      type="text"
+      id="ticker-input"
+      class="ticker-input"
+      placeholder="Enter ticker (AAPL, TSLA, 0700…)"
+      autocomplete="off"
+      spellcheck="false"
+    >
+    <button type="submit" class="ticker-btn">Go</button>
+  </form>
+  <span class="lang-toggles">
+    <button data-lang="en" class="lang-btn active">EN</button>
+    <button data-lang="zh-HK" class="lang-btn">繁</button>
+    <button data-lang="zh-CN" class="lang-btn">简</button>
+  </span>
+</header>
+
+<main class="dashboard" id="dashboard">
+  <!-- Welcome state -->
+  <div class="welcome" id="welcome">
+    <div class="welcome-icon">📊</div>
+    <h2>Welcome to STX AI</h2>
+    <p>Enter a stock ticker above to see real-time data.</p>
+    <div class="quick-tickers">
+      <button class="quick-ticker" data-ticker="AAPL">AAPL</button>
+      <button class="quick-ticker" data-ticker="TSLA">TSLA</button>
+      <button class="quick-ticker" data-ticker="MSFT">MSFT</button>
+      <button class="quick-ticker" data-ticker="0700">0700</button>
+      <button class="quick-ticker" data-ticker="9988">9988</button>
+    </div>
+  </div>
+
+  <!-- Data cards (hidden until search) -->
+  <div class="cards" id="cards" style="display:none">
+    <!-- Row 1: KPI cards -->
+    <div class="card" id="card-price">
+      <div class="card-label">Price</div>
+      <div class="card-value price-value" id="price-value">—</div>
+      <div class="card-sub" id="price-name"></div>
+    </div>
+    <div class="card" id="card-rsi">
+      <div class="card-label">RSI (14)</div>
+      <div class="card-value" id="rsi-value">—</div>
+      <div class="card-sub" id="rsi-zone"></div>
+    </div>
+    <div class="card" id="card-macd">
+      <div class="card-label">MACD</div>
+      <div class="card-value" id="macd-value">—</div>
+      <div class="card-sub" id="macd-sub"></div>
+    </div>
+    <div class="card" id="card-ma">
+      <div class="card-label">Moving Averages</div>
+      <div class="card-ma-row"><span class="ma-label">MA50</span><span id="ma50-value">—</span></div>
+      <div class="card-ma-row"><span class="ma-label">MA200</span><span id="ma200-value">—</span></div>
+      <div class="card-sub" id="ma-relation"></div>
+    </div>
+
+    <!-- Row 2: Patterns + Bollinger -->
+    <div class="card card-wide" id="card-patterns">
+      <div class="card-label">Patterns</div>
+      <div class="patterns-list" id="patterns-list">
+        <span class="muted">No patterns detected</span>
+      </div>
+    </div>
+    <div class="card" id="card-bb">
+      <div class="card-label">Bollinger Bands</div>
+      <div class="card-ma-row"><span class="ma-label">Upper</span><span id="bb-upper">—</span></div>
+      <div class="card-ma-row"><span class="ma-label">Middle</span><span id="bb-middle">—</span></div>
+      <div class="card-ma-row"><span class="ma-label">Lower</span><span id="bb-lower">—</span></div>
+    </div>
+
+    <!-- Row 3: News -->
+    <div class="card card-full" id="card-news">
+      <div class="card-label">News</div>
+      <div class="news-list" id="news-list">
+        <span class="muted">Loading news…</span>
+      </div>
+    </div>
+  </div>
+</main>
+
+<section class="chat-section" id="chat-section" style="display:none">
+  <div class="chat-messages" id="chat-messages"></div>
+  <form class="chat-form" id="chat-form">
+    <input
+      type="text"
+      id="chat-input"
+      class="chat-input"
+      placeholder="Ask anything about this stock…"
+      autocomplete="off"
+    >
+    <button type="submit" class="chat-send">Send</button>
+  </form>
+</section>
+
+<footer class="statusbar" id="statusbar">
+  <span id="status-text">Ready — enter a ticker to begin</span>
+</footer>
+
+<script src="/app.js"></script>
+</body>
+</html>
