@@ -7,6 +7,7 @@
       "analyze": "stxai analyze <股票代號>         串流深度分析",
       "analyze_fast": "stxai analyze <股票代號> --fast  快速模式（45 秒超時）",
       "serve": "stxai serve [--port N]          啟動本機網頁儀表板",
+      "update": "stxai update                    檢查新版本",
       "configure": "stxai configure                 設定 API URL 及 API 金鑰",
       "examples": "範例：",
       "config_header": "設定：",
@@ -34,6 +35,13 @@
     "setup": {
       "welcome": "歡迎！STX AI 需要你的 API 金鑰先可以開始使用。",
       "get_key": "喺 https://stxai.com/dashboard 拎你嘅 API 金鑰，然後執行："
+    },
+    "update": {
+      "checking": "檢查更新中...",
+      "check_failed": "無法檢查更新：%v",
+      "up_to_date": "你已經係最新版本。",
+      "new_version": "有新版本：%s\n\n執行以下指令升級：",
+      "dev_version": "開發版本 — 跳過版本檢查。"
     },
     "display": {
       "bull_case": "看好觀點",

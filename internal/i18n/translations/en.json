@@ -7,6 +7,7 @@
       "analyze": "stxai analyze <TICKER>         Streaming deep analysis",
       "analyze_fast": "stxai analyze <TICKER> --fast  Fast mode (45s timeout)",
       "serve": "stxai serve [--port N]          Start local web dashboard",
+      "update": "stxai update                    Check for new version",
       "configure": "stxai configure                Set API URL and API key",
       "examples": "Examples:",
       "config_header": "Config:",
@@ -34,6 +35,13 @@
     "setup": {
       "welcome": "Welcome! STX AI needs your API key to get started.",
       "get_key": "Get your API key at https://stxai.com/dashboard, then run:"
+    },
+    "update": {
+      "checking": "Checking for updates...",
+      "check_failed": "Could not check for updates: %v",
+      "up_to_date": "You're on the latest version.",
+      "new_version": "New version available: %s\n\nRun this to upgrade:",
+      "dev_version": "Development build — version check skipped."
     },
     "display": {
       "bull_case": "Bull Case",

@@ -74,6 +74,15 @@ func main() {
 			os.Exit(1)
 		}
 
+	case "version", "--version", "-v":
+		commands.VersionCommand()
+
+	case "update":
+		if err := commands.UpdateCommand(lang); err != nil {
+			fmt.Fprintf(os.Stderr, i18n.T("cli.errors.command_error", lang, err))
+			os.Exit(1)
+		}
+
 	case "serve":
 		port := 8420
 		for i, a := range os.Args[2:] {
@@ -120,6 +129,7 @@ func printUsage(lang string) {
 	fmt.Println("  " + i18n.T("cli.usage.analyze", lang))
 	fmt.Println("  " + i18n.T("cli.usage.analyze_fast", lang))
 	fmt.Println("  " + i18n.T("cli.usage.serve", lang))
+	fmt.Println("  " + i18n.T("cli.usage.update", lang))
 	fmt.Println("  " + i18n.T("cli.usage.configure", lang))
 	fmt.Println()
 	fmt.Println(i18n.T("cli.usage.examples", lang))
