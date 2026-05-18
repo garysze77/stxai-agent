@@ -469,9 +469,77 @@ chatForm.addEventListener('submit', async (e) => {
 function addChatMessage(role, text) {
   const div = document.createElement('div');
   div.className = 'chat-msg ' + role;
-  div.textContent = text;
+  div.innerHTML = role === 'ai' ? renderMarkdown(text) : escHtml(text);
   chatMessages.appendChild(div);
   chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function renderMarkdown(text) {
+  let html = escHtml(text);
+
+  // code blocks (must be before inline code)
+  html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) =>
+    '<pre><code>' + code.trim() + '</code></pre>');
+  // inline code (don't match inside pre tags)
+  html = html.replace(/(?<!<pre[^>]*>)(?<!<code>)`([^`\n]+)`(?!<\/code>)/g, '<code>$1</code>');
+
+  // bold **text**
+  html = html.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+
+  // italic *text* (but not **)
+  html = html.replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, '<em>$1</em>');
+
+  // headings (after inline processing)
+  html = html.replace(/^#{1,3}\s+(.+)$/gm, (_, h) => {
+    const level = _.trimStart().lastIndexOf('#') + 1;
+    const tag = 'h' + (level + 3); // h4-h6 for ###, ##, #
+    return '<strong class="md-heading">' + h + '</strong>';
+  });
+
+  // numbered lists (consecutive lines)
+  html = html.replace(/((?:^\d+\.\s+.+\n?)+)/gm, (block) => {
+    const items = block.trim().split('\n').map(l =>
+      '<li>' + l.replace(/^\d+\.\s+/, '') + '</li>');
+    return '<ol>' + items.join('') + '</ol>';
+  });
+
+  // unordered lists (consecutive lines starting with - or •)
+  html = html.replace(/((?:^[\-•]\s+.+\n?)+)/gm, (block) => {
+    const items = block.trim().split('\n').map(l =>
+      '<li>' + l.replace(/^[\-•]\s+/, '') + '</li>');
+    return '<ul>' + items.join('') + '</ul>';
+  });
+
+  // horizontal rules
+  html = html.replace(/^---+$/gm, '<hr>');
+
+  // tables: consecutive lines with | separators
+  html = html.replace(/((?:^\|.+\|\n?)+)/gm, (block) => {
+    const lines = block.trim().split('\n');
+    if (lines.length < 2) return block;
+    const headers = lines[0].split('|').filter(c => c.trim());
+    let table = '<table><thead><tr>';
+    headers.forEach(h => { table += '<th>' + h.trim() + '</th>'; });
+    table += '</tr></thead><tbody>';
+    for (let i = 1; i < lines.length; i++) {
+      if (/^[\|\s\-:]+$/.test(lines[i])) continue; // skip separator row
+      const cells = lines[i].split('|').filter(c => c.trim());
+      if (cells.length === 0) continue;
+      table += '<tr>';
+      cells.forEach(c => { table += '<td>' + c.trim() + '</td>'; });
+      table += '</tr>';
+    }
+    table += '</tbody></table>';
+    return table;
+  });
+
+  // blockquote
+  html = html.replace(/^&gt;\s+(.+)$/gm, '<blockquote>$1</blockquote>');
+
+  // double newlines to paragraph breaks
+  html = html.replace(/\n\n+/g, '<br><br>');
+
+  return html;
 }
 
 // ── Helpers ──
